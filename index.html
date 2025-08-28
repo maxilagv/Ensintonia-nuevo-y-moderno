@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ensintonía — Importadora directa de electrónica y hogar</title>
+
+  <!-- Tailwind (CDN, rápido para prototipo) -->
+  <script>
+    // Asegura el objeto global antes de asignar la configuración
+    window.tailwind = window.tailwind || {};
+    window.tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f8ff',
+              100: '#e6eeff',
+              300: '#7da3ff',
+              500: '#1e40af',
+              700: '#17307a'
+            }
+          },
+          boxShadow: {
+            soft: '0 6px 20px rgba(16,24,40,.08)',
+            card: '0 10px 30px rgba(16,24,40,.06)'
+          },
+          fontFamily: {
+            inter: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Paleta y tokens */
+    :root{
+      --bg-1: #0f172a; /* deep ink */
+      --bg-2: #071032; /* deep blue */
+      --brand-1: #6ee7b7; /* mint */
+      --brand-2: #7c3aed; /* purple */
+      --accent: linear-gradient(90deg,var(--brand-1),#60a5fa 40%,var(--brand-2));
+      --glass: rgba(255,255,255,0.06);
+      --muted: #94a3b8;
+
+      --futuristic-ink: #e6f0ff;
+      --futuristic-mute: #9fb3d9;
+    }
+
+    /* Fondo azul futurista (forzado con !important para evitar override por Tailwind) */
+    body {
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(110,231,183,0.06), transparent 12%),
+                  linear-gradient(180deg, #061229 0%, #072447 30%, #0b3b6b 60%, #081133 100%) !important;
+      color: var(--futuristic-ink) !important;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+
+    /* Ajustes de contraste para textos secundarios */
+    .muted { color: var(--futuristic-mute) !important; }
+    .text-ink { color: var(--futuristic-ink) !important; }
+
+    /* Header / logo: mucho más grande y animado */
+    .logo-wrap {
+      display:flex;
+      align-items:center;
+      gap:.9rem;
+      transform-origin:center;
+    }
+    .logo-big {
+      width:96px;
+      height:auto;
+      transition: transform .6s cubic-bezier(.2,.9,.2,1), filter .6s;
+      filter: drop-shadow(0 18px 40px rgba(99,102,241,.12));
+      will-change: transform;
+    }
+    @media (max-width: 768px){
+      .logo-big{ width:72px; }
+    }
+    .logo-big:hover{ transform: translateY(-4px) rotate(-2deg) scale(1.02); filter: drop-shadow(0 26px 60px rgba(124,58,237,.14)); }
+
+    /* Futuristic heading style */
+    .neon-text {
+      font-family: 'Orbitron', Inter, sans-serif;
+      font-weight:700;
+      background: var(--accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.01em;
+      text-shadow: 0 6px 30px rgba(99,102,241,0.08);
+    }
+
+    .neon-glow {
+      text-shadow:
+        0 2px 0 rgba(255,255,255,0.02),
+        0 6px 18px rgba(124,58,237,0.12),
+        0 10px 40px rgba(96,165,250,0.06);
+    }
+
+    /* Animated gradient underline for brand */
+    .brand-underline{
+      display:inline-block;
+      height:6px;
+      width:64px;
+      border-radius:999px;
+      background: linear-gradient(90deg,#60a5fa,#7c3aed,#6ee7b7);
+      box-shadow: 0 10px 30px rgba(124,58,237,0.08);
+      transform-origin:left center;
+      animation: underline-slide 3.8s linear infinite;
+      opacity:.95;
+    }
+    @keyframes underline-slide {
+      0%{ transform: translateX(-8px) scaleX(.98); filter: blur(.2px) }
+      50%{ transform: translateX(8px) scaleX(1.02); filter: blur(.8px) }
+      100%{ transform: translateX(-8px) scaleX(.98); }
+    }
+
+    /* Subtle floating decorative shapes */
+    .hero-deco { position:absolute; right:-6rem; top:-6rem; width:36rem; height:36rem; opacity:.06; pointer-events:none; filter: blur(18px); transform: rotate(18deg); }
+
+    /* Button glow / micro-animations */
+    .btn-glow {
+      position:relative;
+      overflow:hidden;
+      transition: transform .22s ease, box-shadow .22s ease;
+    }
+    .btn-glow::after{
+      content:'';
+      position:absolute;
+      inset: -50%;
+      background: radial-gradient(circle at 10% 10%, rgba(126,34,206,0.12), transparent 20%),
+                  radial-gradient(circle at 80% 80%, rgba(96,165,250,0.08), transparent 20%);
+      opacity:0;
+      transition: opacity .35s ease;
+      pointer-events:none;
+    }
+    .btn-glow:hover::after{ opacity:1; }
+
+    /* Slight entrance animations */
+    .fade-up-init { opacity:0; transform: translateY(18px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.9,.2,1); }
+    .fade-up-init.show { opacity:1; transform: translateY(0); }
+
+    /* Futuristic card animations & polish */
+    .card-polish {
+      position: relative;
+      overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform, box-shadow;
+      transition: transform .35s cubic-bezier(.2,.9,.2,1), box-shadow .35s ease, filter .35s ease;
+      backface-visibility: hidden;
+    }
+
+    /* initial invisible state for scroll reveal */
+    .card-polish.reveal-init { opacity: 0; transform: translateY(18px) scale(.995); filter: blur(6px) saturate(.9); }
+
+    /* when in viewport */
+    .card-polish.in-view {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0) saturate(1);
+      box-shadow: 0 22px 50px rgba(12,18,32,0.18);
+    }
+
+    /* subtle holographic sheen */
+    .card-polish::before{
+      content: "";
+      position: absolute;
+      inset: -40% -30% auto -30%;
+      height: 140%;
+      background: linear-gradient(120deg, rgba(124,58,237,0.06), rgba(96,165,250,0.06) 35%, rgba(110,231,183,0.04) 60%, transparent 70%);
+      transform: translateX(-30%) rotate(-12deg);
+      transition: transform .8s cubic-bezier(.2,.9,.2,1), opacity .6s ease;
+      pointer-events: none;
+      opacity: 0.95;
+      mix-blend-mode: screen;
+    }
+
+    .card-polish:hover::before { transform: translateX(0) rotate(-8deg); opacity: 1; }
+
+    /* fine grain shimmer on hover */
+    .card-polish .shimmer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 55%, rgba(255,255,255,0.00) 100%);
+      transform: translateX(-120%);
+      transition: transform .9s cubic-bezier(.2,.9,.2,1);
+      mix-blend-mode: overlay;
+      opacity: .9;
+    }
+    .card-polish:hover .shimmer { transform: translateX(120%); }
+
+    /* 3D tilt microinteraction (will be driven by JS mousemove) */
+    .card-polish.tilt {
+      transition: transform .12s linear;
+      transform-origin: center center;
+    }
+
+    /* tiny floating animation to make grid lively (only subtle on non-hover) */
+    @keyframes float-slight {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+      100% { transform: translateY(0px); }
+    }
+    .card-polish.float-subtle { animation: float-slight 6.8s ease-in-out infinite both; opacity: .999; }
+
+    /* card content contrast helpers (already added earlier, keep) */
+    .card-polish h3, .card-polish p, .card-polish a { color: inherit; }
+
+    /* small responsive tweak: reduce intensity on small screens */
+    @media (max-width: 640px){
+      .card-polish::before { opacity: .6; transform: translateX(-20%) rotate(-10deg); }
+      .card-polish.float-subtle { animation: none; }
+    }
+
+    /* Accent small text */
+    .muted { color: var(--muted); }
+
+    /* Make text inside light/white cards readable on the dark futuristic page */
+    .card-polish,
+    .card-hover,
+    .bg-white.card-polish,
+    .bg-white.card-hover,
+    .bg-white {
+      color: #0f172a; /* texto principal oscuro para legibilidad */
+    }
+
+    /* Muted text inside cards: slightly lighter but still dark */
+    .card-polish .muted,
+    .card-hover .muted,
+    .bg-white .muted {
+      color: rgba(15,23,42,0.65);
+    }
+
+    /* Links/buttons inside cards: accent color (brand) */
+    .card-polish a,
+    .card-hover a,
+    .bg-white a {
+      color: #1e40af; /* brand-500 */
+      text-decoration: none;
+    }
+
+    /* Headings inside cards slightly stronger */
+    .card-polish h2,
+    .card-polish h3,
+    .card-polish h4,
+    .card-hover h2,
+    .card-hover h3,
+    .card-hover h4,
+    .bg-white h2,
+    .bg-white h3,
+    .bg-white h4 {
+      color: #071133;
+    }
+
+    /* Ensure components inherit color unless explicitly overridden */
+    .card-polish * , .card-hover * , .bg-white * { color: inherit; }
+
+    /* Mobile-first polish: centrar y hacer estético en pantallas pequeñas */
+    @media (max-width: 640px) {
+      /* Container: padding cómodo y ancho completo */
+      .site-container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        max-width: 100%;
+        margin: 0 auto;
+      }
+
+      /* Header: mayor altura, logo más grande visualmente centrado */
+      #main-header .site-container { height: 72px; gap: 0.5rem; }
+      .logo-big { width: 72px !important; height: auto; }
+      .logo-wrap { gap: 0.6rem; align-items: center; }
+
+      /* Títulos: menor tamaño pero con mayor contraste y centrado */
+      #hero-title { font-size: 1.6rem; line-height: 1.05; text-align: center; }
+      #hero-sub, #hero-detail { font-size: 0.98rem; text-align: center; }
+
+      /* Hero CTAs: apilados y full width para tocar fácil con el pulgar */
+      #hero-ctas { flex-direction: column; gap: 0.75rem; align-items: stretch; }
+      #hero-ctas .btn { width: 100%; display: inline-flex; justify-content: center; }
+
+      /* Accent line centrado y más sutil */
+      .accent-line { margin: 0.6rem auto 1rem auto; width: 48px; height: 3px; }
+
+      /* Ocultar decoraciones pesadas para no competir con el contenido */
+      .hero-deco { display: none !important; }
+
+      /* Cards: full width, centradas y con menos blur/tilt para rendimiento.
+         Mantener padding interno y bordes suaves. */
+      .card-polish, .product-card {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        border-radius: 1rem !important;
+        box-shadow: 0 8px 24px rgba(2,6,23,0.08) !important;
+      }
+      .card-polish.reveal-init { transform: translateY(10px) scale(0.999) !important; filter: none !important; }
+      .card-polish.tilt { transition: none; transform: none !important; } /* desactivar tilt en móvil */
+
+      /* Grid de categorías / productos: una columna con gap */
+      #categories-container, #contenedor-productos {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      /* Centrar texto en tarjetas para estética móvil */
+      .product-card .p-6, .product-card .p-4 { text-align: left; } /* mantener left para legibilidad */
+      .product-card h3 { font-size: 1.05rem; }
+      .product-card p { font-size: 0.95rem; }
+
+      /* Botones pequeños dentro de cards: full width y mayor toque */
+      .product-card .btn, .product-card a { width: 100%; display: inline-flex; justify-content: center; }
+
+      /* Nav móvil: mejorar espaciado y centrar elementos */
+      #mobile-nav { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+      #mobile-nav a { padding: 0.75rem 1rem; border-radius: 0.75rem; }
+
+      /* Input search móvil: full width y mayor hit area */
+      #search-input-mobile { width: 100%; padding-left: 1rem; padding-right: 1rem; border-radius: 12px; }
+
+      /* Reducir animaciones al mínimo para ahorro de CPU en móviles */
+      .card-polish::before, .card-polish .shimmer { display: none; }
+      .card-polish.float-subtle { animation: none; }
+
+      /* Ajustes tipográficos para legibilidad */
+      body { -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+      .muted { opacity: 0.9; }
+    }
+  </style>
+</head>
+
+<body class="font-inter text-[15px] lg:text-base text-ink antialiased bg-gradient-to-b from-white to-brand-50">
+  <header id="main-header" class="sticky top-0 z-50 bg-white/80 backdrop-blur glass border-b border-gray-100">
+    <div class="site-container flex items-center justify-between h-24">
+      <a class="flex items-center gap-4 logo-wrap" href="#">
+        <img class="logo-big" src="https://i.postimg.cc/GtWS4w0z/Captura-de-pantalla-2025-08-21-134638.png" alt="Ensintonía logo" loading="lazy" decoding="async">
+        <div>
+          <div class="neon-text neon-glow text-2xl leading-tight">Ensintonía</div>
+          <div class="text-sm muted -mt-1">Importadora directa • Electrónica & Hogar</div>
+          <div class="mt-2 brand-underline"></div>
+        </div>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-6">
+        <a href="#quienes-somos" class="text-sm text-ink hover:text-brand-700 transition">Quiénes somos</a>
+        <a href="#propuesta-valor" class="text-sm text-ink hover:text-brand-700 transition">Propuesta</a>
+        <a id="catalog-link-header" href="/catalogo.html" class="text-sm text-ink hover:text-brand-700 transition">Catálogo</a>
+        <a href="#contacto" class="text-sm text-ink hover:text-brand-700 transition">Contacto</a>
+        <a href="https://wa.me/5491159914197" target="_blank" rel="noopener" class="ml-4 px-4 py-2 rounded-full bg-green-600 text-white text-sm shadow-sm hover:bg-green-700 transition">WhatsApp</a>
+      </nav>
+
+      <!-- mobile right controls -->
+      <div class="md:hidden flex items-center gap-2">
+        <button id="mobile-search-toggle" class="p-2 rounded-lg text-ink hover:bg-gray-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
+        </button>
+        <button id="mobile-menu-button" class="sm:hidden z-50 p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none" aria-expanded="false" aria-controls="mobile-nav">
+          <span class="bar block w-7 h-0.5 bg-gray-900 mb-1 rounded transition-all duration-300"></span>
+          <span class="bar block w-7 h-0.5 bg-gray-900 mb-1 rounded transition-all duration-300"></span>
+          <span class="bar block w-7 h-0.5 bg-gray-900 rounded transition-all duration-300"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile search (hidden on md+) -->
+  <div id="mobile-search" class="md:hidden px-4 py-3 hidden">
+    <div class="relative">
+      <input id="search-input-mobile" type="search" placeholder="Buscar… (Ctrl+K)" autocomplete="off"
+             class="w-full rounded-2xl border border-gray-200 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-300" />
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <section id="hero-intro" class="section py-20 relative overflow-visible">
+    <div class="hero-deco">
+      <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+        </defs>
+        <circle cx="300" cy="300" r="300" fill="url(#g1)"></circle>
+      </svg>
+    </div>
+
+    <div class="site-container text-center">
+      <div class="mx-auto max-w-3xl">
+        <div class="accent-line mx-auto mb-6 fade-up-init" id="hero-accent"></div>
+        <h1 class="title text-4xl sm:text-5xl font-extrabold text-ink leading-tight mb-4 fade-up-init neon-text" id="hero-title">
+          Somos <span class="brand">Ensintonía</span>
+        </h1>
+        <p class="subtitle text-lg muted mb-8 fade-up-init" id="hero-sub">
+          Importadora directa de electrónica y soluciones para el hogar. Calidad, stock real y soporte local para que tu proyecto llegue sin sorpresas.
+        </p>
+
+        <div class="flex items-center justify-center gap-4 flex-wrap fade-up-init" id="hero-ctas">
+          <a id="hero-catalog-btn" href="/catalogo.html" class="btn btn-glow btn-glow btn-glow bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-2xl shadow-sm card-polish btn-glow">
+            Ver catálogo
+          </a>
+          <a href="https://wa.me/5491159914197" target="_blank" rel="noopener" class="btn btn-outline border border-gray-200 px-5 py-3 rounded-2xl text-ink hover:bg-gray-50 card-polish">
+            Escribinos por WhatsApp
+          </a>
+        </div>
+
+        <p class="mt-8 text-sm muted fade-up-init" id="hero-detail">
+          Desde componentes electrónicos hasta soluciones para el hogar: trabajamos con fabricantes internacionales para ofrecer productos confiables, entrega eficiente y respaldo local.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIENES SOMOS -->
+  <section id="quienes-somos" class="section py-16">
+    <div class="site-container">
+      <div class="grid lg:grid-cols-2 gap-8 items-center">
+        <div>
+          <h2 class="section-title text-2xl font-bold mb-4">Quiénes somos</h2>
+          <p class="text-muted-700 mb-4">En Ensintonía nacimos con una idea simple: acercar tecnología confiable al mejor precio posible, sin dolores de cabeza. Operamos desde Sarratea, Quilmes Oeste, combinando importación directa, selección de marcas y un servicio posventa que responde.</p>
+          <p class="text-muted-700">Nuestra propuesta mezcla <strong>stock real</strong>, <strong>asesoría honesta</strong> y <strong>logística simple</strong>. Si buscás electrónica para uso personal o para tu negocio, queremos que encuentres lo esencial: buen producto, buen precio y buena atención.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-6 bg-white rounded-2xl shadow-sm card-hover">
+            <h3 class="font-semibold mb-2">Importación & distribución</h3>
+            <p class="text-sm text-muted-700">Líneas de audio, hogar y accesorios con lotes escalables.</p>
+          </div>
+          <div class="p-6 bg-white rounded-2xl shadow-sm card-hover">
+            <h3 class="font-semibold mb-2">Asesoría de compra</h3>
+            <p class="text-sm text-muted-700">Te ayudamos a elegir con datos reales y expectativas claras.</p>
+          </div>
+          <div class="p-6 bg-white rounded-2xl shadow-sm card-hover">
+            <h3 class="font-semibold mb-2">Posventa</h3>
+            <p class="text-sm text-muted-700">Soporte humano y gestión de garantías.</p>
+          </div>
+          <div class="p-6 bg-white rounded-2xl shadow-sm card-hover">
+            <h3 class="font-semibold mb-2">Alianzas B2B</h3>
+            <p class="text-sm text-muted-700">Precios por volumen y reposición programada.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROPUESTA DE VALOR -->
+  <section id="propuesta-valor" class="section py-12 bg-white/60">
+    <div class="site-container">
+      <h2 class="section-title text-2xl font-bold mb-6">Nuestra propuesta de valor</h2>
+      <ul class="grid sm:grid-cols-2 gap-4">
+        <li class="p-4 bg-white rounded-2xl shadow-sm flex items-start gap-3 card-hover">
+          <svg class="w-6 h-6 text-brand-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <div>
+            <strong>Importadora directa</strong>
+            <div class="text-sm text-muted-700">Menos intermediarios, mejor precio.</div>
+          </div>
+        </li>
+        <li class="p-4 bg-white rounded-2xl shadow-sm flex items-start gap-3 card-hover">
+          <svg class="w-6 h-6 text-brand-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M6 7v10"/></svg>
+          <div>
+            <strong>Curaduría de marcas</strong>
+            <div class="text-sm text-muted-700">Probamos y elegimos lo mejor.</div>
+          </div>
+        </li>
+        <li class="p-4 bg-white rounded-2xl shadow-sm flex items-start gap-3 card-hover">
+          <svg class="w-6 h-6 text-brand-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M5 10v10"/></svg>
+          <div>
+            <strong>Stock actualizado</strong>
+            <div class="text-sm text-muted-700">Inventario vivo y entregas ágiles.</div>
+          </div>
+        </li>
+        <li class="p-4 bg-white rounded-2xl shadow-sm flex items-start gap-3 card-hover">
+          <svg class="w-6 h-6 text-brand-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+          <div>
+            <strong>Soporte cercano</strong>
+            <div class="text-sm text-muted-700">Acompañamos antes y después de la compra.</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- CATEGORÍAS -->
+  <section id="categorias" class="section py-16">
+    <div class="site-container">
+      <h2 class="section-title text-2xl font-bold mb-6">Categorías</h2>
+      <ul class="flex flex-wrap gap-3">
+        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Audio y auriculares</li>
+        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">TV sticks y streaming</li>
+        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Informática & periféricos</li>
+        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Hogar inteligente</li>
+        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Pequeños electrodomésticos</li>
+        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Cables, cargadores y accesorios</li>
+      </ul>
+      <p class="note text-sm text-muted-700 mt-4">El catálogo se actualiza seguido.</p>
+    </div>
+  </section>
+
+  <!-- LOGÍSTICA -->
+  <section id="logistica" class="section py-12 bg-white/60">
+    <div class="site-container">
+      <h2 class="section-title text-2xl font-bold mb-4">Logística y cobertura</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="p-4 bg-white rounded-2xl shadow-sm card-hover">
+          <h4 class="font-semibold mb-2">Envíos</h4>
+          <p class="text-sm text-muted-700">Correo y transporte; mensajería en AMBA. Costos y tiempos según destino y peso.</p>
+        </div>
+        <div class="p-4 bg-white rounded-2xl shadow-sm card-hover">
+          <h4 class="font-semibold mb-2">Pagos</h4>
+          <p class="text-sm text-muted-700">Efectivo, transferencia y medios electrónicos. Consultá por promociones.</p>
+        </div>
+        <div class="p-4 bg-white rounded-2xl shadow-sm card-hover">
+          <h4 class="font-semibold mb-2">Facturación</h4>
+          <p class="text-sm text-muted-700">Emitimos comprobantes según normativa vigente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GARANTÍA -->
+  <section id="garantia" class="section py-12">
+    <div class="site-container">
+      <h2 class="section-title text-2xl font-bold mb-4">Garantías y cambios</h2>
+      <p class="text-muted-700 mb-4">Todos los productos cuentan con garantía del fabricante o del importador según el caso. Si recibís algo con falla de origen, avisanos dentro de los plazos para gestionar el cambio o la reparación.</p>
+      <ul class="list-disc pl-5 text-muted-700">
+        <li>Probamos y verificamos funcionamiento básico antes de despachar cuando corresponde.</li>
+        <li>Guardá packaging, accesorios y comprobante de compra para agilizar cualquier gestión.</li>
+        <li>Te asistimos para diagnosticar y resolver rápido.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- CÓMO COMPRAR -->
+  <section id="como-comprar" class="section py-12 bg-white/60">
+    <div class="site-container">
+      <h2 class="section-title text-2xl font-bold mb-4">Cómo comprar</h2>
+      <ol class="list-decimal pl-5 text-muted-700 space-y-2">
+        <li>Entrá al <a class="text-brand-500 underline" href="/catalogo.html">catálogo</a> y elegí tu producto.</li>
+        <li>Consultanos disponibilidad y medio de pago.</li>
+        <li>Coordinamos envío o retiro.</li>
+        <li>Recibís y probás. Si necesitás ayuda, estamos.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="section py-12">
+    <div class="site-container">
+      <h2 class="section-title text-2xl font-bold mb-4">Preguntas frecuentes</h2>
+      <details class="mb-3">
+        <summary>¿Tienen stock real?</summary>
+        <p class="text-muted-700">Actualizamos el inventario a diario. Si algo varía, te avisamos antes de cerrar la compra.</p>
+      </details>
+      <details class="mb-3">
+        <summary>¿Hacen precios por cantidad?</summary>
+        <p class="text-muted-700">Sí. Para comercios y revendedores tenemos escalas por volumen. Pedí tu lista.</p>
+      </details>
+      <details class="mb-3">
+        <summary>¿Cuánto tarda el envío?</summary>
+        <p class="text-muted-700">Depende del destino y del operador. En AMBA suele ser más ágil. Te pasamos estimado al momento de comprar.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- CONTACTO -->
+  <section id="contacto" class="section py-12 bg-white/60">
+    <div class="site-container">
+      <h2 class="section-title text-2xl font-bold mb-4">Contacto</h2>
+      <address class="not-italic text-muted-700">
+        <strong>Base de operaciones:</strong> Sarratea, Quilmes Oeste, Buenos Aires<br>
+        <strong>WhatsApp:</strong> <a class="text-brand-500 underline" href="https://wa.me/5491159914197" target="_blank" rel="noopener">+54 9 11 5991‑4197</a><br>
+        <strong>Horarios:</strong> a coordinar (consultar disponibilidad)
+      </address>
+
+      <div class="mt-6 flex gap-3">
+        <a href="/catalogo.html" class="btn btn-primary bg-brand-500 hover:bg-brand-600 text-white px-5 py-3 rounded-2xl shadow-sm card-hover">Ir al catálogo</a>
+        <a href="https://wa.me/5491159914197" target="_blank" rel="noopener" class="btn btn-outline border border-gray-200 px-5 py-3 rounded-2xl">Escribir por WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CIERRE -->
+  <section id="cierre" class="section py-12">
+    <div class="site-container text-center">
+      <h2 class="section-title text-2xl font-bold mb-4">Tecnología que suma, sin complicaciones</h2>
+      <p class="text-muted-700 mb-6">Ese es nuestro norte. Si buscás precio, garantía y una atención que responde, estamos en la misma sintonía.</p>
+      <a href="/catalogo.html" class="btn btn-primary bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-2xl shadow-sm card-hover">Ver catálogo</a>
+    </div>
+  </section>
+
+  <!-- Schema.org JSON-LD (mantener) -->
+  <!-- ==========================
+Schema.org — Organization (ajustá datos si cambia el teléfono o agregás redes)
+========================== -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Ensintonía",
+  "description": "Importadora y distribuidora de electrónica y productos para el hogar. Atención mayorista y minorista desde Quilmes Oeste.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Sarratea",
+    "addressLocality": "Quilmes Oeste",
+    "addressRegion": "Buenos Aires",
+    "addressCountry": "AR"
+  },
+  "telephone": "+54 9 11 5991 4197",
+  "url": "https://tusitio.com/",
+  "contactPoint": [{
+    "@type": "ContactPoint",
+    "contactType": "customer support",
+    "telephone": "+54 9 11 5991 4197",
+    "areaServed": "AR"
+  }]
+}
+</script>
+
+  <!-- Small script to orchestrate hero entrance and small interactivity (delegado a main.js para la lógica pesada) -->
+  <script>
+    // secuencia visual del hero (simple y ligera)
+    (function(){
+      const ids = ['hero-title','hero-sub','hero-ctas','hero-detail'];
+      let delay = 60;
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(el){
+          el.classList.add('fade-in-up');
+          setTimeout(()=> el.classList.add('show'), delay);
+          delay += 160;
+        }
+      });
+
+      // mobile search toggle simple
+      const searchToggle = document.getElementById('mobile-search-toggle');
+      const mobileSearch = document.getElementById('mobile-search');
+      if(searchToggle && mobileSearch){
+        searchToggle.addEventListener('click', ()=> mobileSearch.classList.toggle('hidden'));
+      }
+
+      // hamburger -> simple X animation (main.js better manages aria/focus)
+      const mobileBtn = document.getElementById('mobile-menu-button');
+      if(mobileBtn){
+        mobileBtn.addEventListener('click', ()=> mobileBtn.classList.toggle('open'));
+      }
+    })();
+  </script>
+
+  <script>
+    /* Insert inside your existing DOMContentLoaded (o after it) to initialize card animations.
+       This code is defensive: it won't recreate observers if they exist. */
+    (function initCardAnimationsModule(){
+      // create observer if not present
+      if (!window.cardRevealObserver) {
+        try {
+          window.cardRevealObserver = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+              const el = entry.target;
+              if (entry.isIntersecting) {
+                el.classList.add('in-view');
+                el.classList.remove('reveal-init');
+                // add small floating only for non-hovered state
+                el.classList.add('float-subtle');
+                // unobserve so it animates only once
+                obs.unobserve(el);
+              }
+            });
+          }, { threshold: 0.14 });
+        } catch (err) {
+          window.cardRevealObserver = null;
+          console.warn('cardRevealObserver not available', err);
+        }
+      }
+
+      // helper: attach tilt handlers to a card
+      function attachTilt(card) {
+        if (!card) return;
+        let rect = null;
+        const strength = 12; // degrees max
+        function onMove(e){
+          rect = rect || card.getBoundingClientRect();
+          const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+          const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+          const px = (clientX - rect.left) / rect.width;
+          const py = (clientY - rect.top) / rect.height;
+          const rotY = (px - 0.5) * strength; // rotateY
+          const rotX = (0.5 - py) * (strength * 0.65); // rotateX (less)
+          card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(1.01)`;
+        }
+        function onLeave(){
+          card.style.transform = '';
+        }
+        card.addEventListener('mousemove', onMove);
+        card.addEventListener('touchmove', onMove, { passive: true });
+        card.addEventListener('mouseleave', onLeave);
+        card.addEventListener('touchend', onLeave);
+        // mark as having tilt to avoid double attach
+        card.dataset.tiltAttached = '1';
+      }
+
+      // function to initialize cards present in DOM now (and future ones if you call again)
+      function observeCards(root = document) {
+        const cards = Array.from(root.querySelectorAll('.card-polish'));
+        cards.forEach(card => {
+          // ensure initial reveal state
+          if (!card.classList.contains('reveal-init') && !card.classList.contains('in-view')) {
+            card.classList.add('reveal-init');
+          }
+          // ensure shimmer element exists
+          if (!card.querySelector('.shimmer')) {
+            const sh = document.createElement('div');
+            sh.className = 'shimmer';
+            card.appendChild(sh);
+          }
+          // observe for reveal
+          if (window.cardRevealObserver) window.cardRevealObserver.observe(card);
+          // attach tilt if not attached and on wide screens
+          if (!card.dataset.tiltAttached && window.innerWidth > 768) {
+            card.classList.add('tilt');
+            attachTilt(card);
+          }
+        });
+      }
+
+      // expose for other modules
+      window.observeCards = observeCards;
+
+      // run on DOMContentLoaded if ready, otherwise wait
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        observeCards();
+      } else {
+        document.addEventListener('DOMContentLoaded', () => observeCards());
+      }
+
+      // re-run observeCards when new content is inserted (optional: you can call window.observeCards() after generating cards)
+      // small MutationObserver to auto-detect added cards (lightweight)
+      try {
+        const mo = new MutationObserver((mutations) => {
+          let added = false;
+          mutations.forEach(m => {
+            if (m.addedNodes && m.addedNodes.length) {
+              m.addedNodes.forEach(n => {
+                if (n.nodeType === 1 && n.matches && n.matches('.card-polish')) added = true;
+                if (n.nodeType === 1) {
+                  // also check descendants
+                  if (n.querySelector && n.querySelector('.card-polish')) added = true;
+                }
+              });
+            }
+          });
+          if (added) observeCards();
+        });
+        mo.observe(document.body, { childList: true, subtree: true });
+      } catch (e) {
+        // noop if MutationObserver not allowed
+      }
+    })();
+  </script>
+
+</body>
+</html>

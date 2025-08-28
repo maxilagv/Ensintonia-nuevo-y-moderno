@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ensintonía - Todo para tu hogar</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Inter","ui-sans-serif","system-ui"] },
+            colors: {
+              brand:{50:"#eef6ff",100:"#dbeafe",200:"#bfdbfe",300:"#93c5fd",400:"#60a5fa",500:"#3b82f6",600:"#2563eb",700:"#1d4ed8",800:"#1e40af",900:"#1e3a8a"},
+              ink:{900:"#0f172a",700:"#334155",500:"#64748b"}
+            },
+            borderRadius:{ xl:"0.75rem", "2xl":"1rem" },
+            boxShadow:{ sm:"0 1px 2px rgba(0,0,0,.06)", md:"0 4px 12px rgba(0,0,0,.10)", lg:"0 10px 24px rgba(0,0,0,.12)" }
+          }
+        }
+      }
+    </script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome CDN para iconos (incluido para el botón de WhatsApp y el icono de microchip) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="/favicon.ico">
+    <style>
+        /* Estilos base para el cuerpo y la fuente */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Un gris muy claro, casi blanco */
+            color: #374151; /* Color de texto general más oscuro para mejor contraste */
+        }
+
+        /* Estilos para las tarjetas de producto */
+        .product-card {
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+            border: 1px solid #e2f0f4; /* Borde suave, ligeramente azulado */
+            border-radius: 0.75rem; /* rounded-xl de Tailwind */
+        }
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.02); /* Efecto más pronunciado al pasar el ratón */
+            /* Reemplazado: aplicar shadow-md / shadow-lg en el HTML donde sea necesario */
+            border-color: #2563eb; /* Borde azul al pasar el ratón (actualizado) */
+        }
+
+        /* Estilos para los botones primarios */
+        .btn-primary {
+            background-color: #2563eb; /* Azul principal actualizado */
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
+            /* Reemplazado: usar shadow-sm/shadow-md/shadow-lg en las clases de HTML */
+            border-radius: 0.5rem; /* rounded-lg de Tailwind */
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7; /* (NO se tocó este valor aparte del principal pedido) */
+            transform: translateY(-3px) scale(1.01); /* Efecto de "levantar" y crecer ligeramente */
+            /* Reemplazado: usar shadow-lg en la clase de HTML */
+        }
+
+        /* Estilos para el botón de WhatsApp flotante */
+        .btn-whatsapp {
+            background-color: #25D366; /* Verde WhatsApp */
+            transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.3s ease-in-out;
+            /* Se eliminó la box-shadow aquí: usar shadow-sm/shadow-md/shadow-lg en el HTML */
+            /* Asegura que el botón sea un círculo perfecto */
+            width: 56px; /* 56px = w-14 en Tailwind */
+            height: 56px; /* 56px = h-14 en Tailwind */
+            display: flex; /* Para centrar el ícono */
+            align-items: center; /* Para centrar el ícono */
+            justify-content: center; /* Para centrar el ícono */
+            font-size: 2rem; /* Tamaño del ícono de Font Awesome */
+            border-radius: 9999px; /* rounded-full de Tailwind */
+        }
+        .btn-whatsapp:hover {
+            background-color: #1DA851; /* Verde WhatsApp más oscuro al pasar el ratón */
+            transform: translateY(-3px) scale(1.01);
+            /* Reemplazado: usar shadow-lg en la clase de HTML */
+        }
+
+        /* Estilos para los enlaces de navegación */
+        .navbar-link {
+            transition: color 0.3s ease-in-out, transform 0.2s ease-in-out;
+        }
+        .navbar-link:hover {
+            color: #2563eb; /* Azul al pasar el ratón (actualizado) */
+            transform: translateY(-2px); /* Pequeño desplazamiento hacia arriba */
+        }
+
+        /* Estilos para el título de la sección de héroe */
+        .hero-heading {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4); /* Sombra de texto para el título del héroe, más oscura */
+        }
+
+        /* Gradiente sutil para secciones */
+        .section-bg-gradient {
+            background-image: linear-gradient(to right, #e0f2fe, #e3f2fd); /* Gradiente sutil para secciones */
+        }
+
+        /* Animaciones CSS */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-down {
+            animation: fadeInDown 1s ease-out forwards;
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 1s ease-out forwards;
+            animation-delay: 0.3s; /* Retraso para que aparezca después del título */
+        }
+
+        /* Hamburger bars + open state */
+        #mobile-menu-button .bar {
+          display: block;
+          transform-origin: center;
+        }
+        #mobile-menu-button.open .bar:nth-child(1) {
+          transform: translateY(7px) rotate(45deg);
+        }
+        #mobile-menu-button.open .bar:nth-child(2) {
+          opacity: 0;
+        }
+        #mobile-menu-button.open .bar:nth-child(3) {
+          transform: translateY(-7px) rotate(-45deg);
+        }
+
+        /* Estilos para el loader futurista */
+        #futuristic-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #1a202c, #2d3748); /* Fondo oscuro degradado */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999; /* Asegura que esté por encima de todo */
+            color: #e2e8f0; /* Color de texto claro */
+            font-family: 'Inter', sans-serif;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+            pointer-events: auto; /* Por defecto, permite eventos de puntero para que bloquee la interacción */
+        }
+
+        #futuristic-loader.hidden {
+            opacity: 0;
+            pointer-events: none; /* Deshabilita los eventos del puntero cuando está oculto */
+        }
+
+        .loader-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 5px;
+            width: 100px;
+            height: 100px;
+            transform: rotate(45deg); /* Inclinación para un efecto más dinámico */
+        }
+
+        .loader-grid-item {
+            background-color: rgba(66, 153, 225, 0.2); /* Azul semitransparente */
+            animation: pulse 1.5s infinite ease-in-out alternate;
+        }
+
+        .loader-grid-item:nth-child(even) {
+            animation-delay: 0.2s;
+        }
+        .loader-grid-item:nth-child(odd) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.5;
+                background-color: rgba(66, 153, 225, 0.2);
+            }
+            100% {
+                transform: scale(1.1);
+                opacity: 1;
+                background-color: rgba(66, 153, 225, 0.8); /* Azul más brillante */
+            }
+        }
+
+        .loader-text {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #4299e1; /* Azul brillante */
+            animation: glow 1.5s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #4299e1, 0 0 10px #4299e1;
+            }
+            to {
+                text-shadow: 0 0 10px #4299e1, 0 0 20px #4299e1, 0 0 30px #4299e1;
+            }
+        }
+
+        /* --- Estilos para la animación del botón de hamburguesa --- */
+        /* Estilos base para las líneas de la hamburguesa */
+        #mobile-menu-button span {
+            display: block;
+            width: 24px;
+            height: 3px;
+            background-color: #374151; /* Color de las líneas */
+            border-radius: 2px;
+            transition: all 0.3s ease-in-out; /* Transición suave para todos los cambios */
+        }
+
+        /* Espacio entre las líneas */
+        #mobile-menu-button span:nth-child(2) {
+            margin: 5px 0;
+        }
+
+        /* Estado 'open' (cuando el menú está abierto): las líneas se transforman en una 'X' */
+        #mobile-menu-button.open span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg); /* La línea superior se mueve hacia abajo y rota */
+        }
+
+        #mobile-menu-button.open span:nth-child(2) {
+            opacity: 0; /* La línea del medio se desvanece */
+        }
+
+        #mobile-menu-button.open span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg); /* La línea inferior se mueve hacia arriba y rota */
+        }
+        /* --- Fin de los estilos del botón de hamburguesa --- */
+
+        /* Sombra interior para el footer - se reemplazó: usar shadow-md en el HTML */
+        /* .shadow-inner-top {
+            box-shadow: inset 0 8px 10px -5px rgba(0, 0, 0, 0.2);
+        } */
+        
+        /* Estilos para la animación de la imagen de la categoría */
+        .category-image-animated {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* Estilos para el modal de imagen en pantalla completa */
+        .image-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); /* Fondo oscuro semitransparente */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000; /* Asegura que esté por encima de todo lo demás */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            pointer-events: none; /* Asegura que no bloquee los clics cuando está oculto */
+        }
+
+        .image-modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto; /* Permite eventos cuando está abierto */
+        }
+
+        .image-modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal-content img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Asegura que la imagen se ajuste sin recortarse */
+            border-radius: 0.75rem; /* rounded-xl */
+            /* Reemplazado: usar shadow-lg en el elemento <img> */
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 9999px; /* rounded-full */
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .image-modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+      /* Fade-in-up animation helper (applied por JS) */
+      .animate-fade-in-up {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+        transition: opacity .5s ease, transform .5s cubic-bezier(.2,.9,.2,1);
+      }
+
+      /* Inicial state for items observed */
+      .opacity-0 { opacity: 0; }
+      .translate-y-4 { transform: translateY(16px); }
+
+      /* Ripple effect base for primary buttons and whatsapp */
+      .btn-primary, .btn-whatsapp {
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-primary .ripple, .btn-whatsapp .ripple {
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        background: rgba(255,255,255,0.28);
+        pointer-events: none;
+        animation: ripple 600ms linear;
+      }
+      /* Slightly darker ripple for light buttons if needed */
+      .btn-whatsapp .ripple { background: rgba(255,255,255,0.18); }
+
+      @keyframes ripple {
+        to { transform: scale(4); opacity: 0; }
+      }
+
+    /* --- Añadido: estilos para logo grande y efecto neon (igual que index.html) --- */
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transform-origin: center;
+    }
+    .logo-big {
+      width: 10px;           /* ANCHO AUMENTADO */
+      height: auto;
+      padding: 12px;          /* padding mayor para badge visible */
+      border-radius: 18px;
+      transition: transform .6s cubic-bezier(.2,.9,.2,1), filter .6s, opacity .6s;
+      filter: drop-shadow(0 26px 60px rgba(99,102,241,.14));
+      will-change: transform, opacity;
+      opacity: 0;
+      transform: translateY(8px) scale(.98);
+    }
+    @media (max-width: 1024px) {
+      .logo-big { width: 100px; }
+    }
+    @media (max-width: 768px) {
+      .logo-big { width: 110px; padding: 8px; border-radius: 14px; }
+    }
+    .logo-big.logo-animate {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .logo-big:hover { transform: translateY(-4px) rotate(-2deg) scale(1.02); filter: drop-shadow(0 26px 60px rgba(124,58,237,.14)); }
+
+    .neon-text {
+      display: inline-block;
+      font-family: 'Orbitron', Inter, sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.25rem, 4.2vw, 2.4rem); /* algo más larga en tamaño y responsive */
+      line-height: 1;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, #6ee7b7 0%, #60a5fa 45%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 0.6px rgba(2,6,23,0.88); /* sutil contorno para separar del fondo */
+      /* glow contenido en la tipografía: finas sombras para dar profundidad sin "borrar" el borde */
+      text-shadow:
+        0 1px 0 rgba(255,255,255,0.04),
+        0 4px 12px rgba(96,165,250,0.10),
+        0 8px 22px rgba(124,58,237,0.06);
+      filter: drop-shadow(0 6px 18px rgba(96,165,250,0.06));
+      transition: transform .45s ease, opacity .45s ease;
+      will-change: transform, opacity;
+      vertical-align: middle;
+    }
+
+    /* Subrayado más limpio y proporcional; se adapta al ancho del texto */
+    .brand-underline {
+      display: inline-block;
+      height: 6px;
+      width: min(14rem, 28vw); /* proporcional para que acompañe la palabra */
+      border-radius: 999px;
+      background: linear-gradient(90deg,#60a5fa,#7c3aed,#6ee7b7);
+      box-shadow: 0 10px 28px rgba(124,58,237,0.09);
+      margin-left: .6rem;
+      vertical-align: middle;
+      transform-origin: left center;
+      transition: opacity .45s ease, transform .45s ease;
+    }
+
+    /* Ajustes responsivos: asegurar legibilidad en pantallas chicas */
+    @media (max-width: 768px) {
+      .neon-text { font-size: clamp(1rem, 5.2vw, 1.35rem); -webkit-text-stroke: 0.45px; }
+      .brand-underline { width: min(10rem, 38vw); height: 5px; margin-left: .4rem; }
+    }
+
+    /* Override mínimo para asegurar que no quede rastro del neon-brand */
+    .neon-text, .brand-underline { display: none !important; }
+
+    /* PRODUCT DETAIL MODAL (pegado antes del modal de imagen fullscreen) */
+    #pd-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      display: none;
+    }
+
+    #pd-overlay[aria-hidden="false"] {
+      display: block;
+    }
+
+    .pd-modal-bg {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .pd-modal {
+      position: absolute;
+      inset: auto;
+      top: 6rem;
+      bottom: 6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(1100px, 96vw);
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pd-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .pd-modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .pd-modal-close {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 1.5rem;
+      line-height: 1;
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      transition: background 0.2s;
+    }
+
+    .pd-modal-close:hover {
+      background: #f3f4f6;
+    }
+
+    .pd-modal-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .pd-modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .pd-button {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .pd-button:hover {
+      transform: translateY(-2px);
+    }
+
+    .pd-button:active {
+      transform: translateY(1px);
+    }
+
+    .pd-button-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .pd-button-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .pd-button-secondary {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .pd-button-secondary:hover {
+      background: #e5e7eb;
+    }
+
+    /* --- Fin de los estilos del botón de hamburguesa --- */
+
+    /* Sombra interior para el footer - se reemplazó: usar shadow-md en el HTML */
+    /* .shadow-inner-top {
+            box-shadow: inset 0 8px 10px -5px rgba(0, 0, 0, 0.2);
+        } */
+        
+        /* Estilos para la animación de la imagen de la categoría */
+        .category-image-animated {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* Estilos para el modal de imagen en pantalla completa */
+        .image-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); /* Fondo oscuro semitransparente */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000; /* Asegura que esté por encima de todo lo demás */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            pointer-events: none; /* Asegura que no bloquee los clics cuando está oculto */
+        }
+
+        .image-modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto; /* Permite eventos cuando está abierto */
+        }
+
+        .image-modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal-content img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Asegura que la imagen se ajuste sin recortarse */
+            border-radius: 0.75rem; /* rounded-xl */
+            /* Reemplazado: usar shadow-lg en el elemento <img> */
+        }
+
+        .image-modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 9999px; /* rounded-full */
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .image-modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+      /* Fade-in-up animation helper (applied por JS) */
+      .animate-fade-in-up {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+        transition: opacity .5s ease, transform .5s cubic-bezier(.2,.9,.2,1);
+      }
+
+      /* Inicial state for items observed */
+      .opacity-0 { opacity: 0; }
+      .translate-y-4 { transform: translateY(16px); }
+
+      /* Ripple effect base for primary buttons and whatsapp */
+      .btn-primary, .btn-whatsapp {
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-primary .ripple, .btn-whatsapp .ripple {
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        background: rgba(255,255,255,0.28);
+        pointer-events: none;
+        animation: ripple 600ms linear;
+      }
+      /* Slightly darker ripple for light buttons if needed */
+      .btn-whatsapp .ripple { background: rgba(255,255,255,0.18); }
+
+      @keyframes ripple {
+        to { transform: scale(4); opacity: 0; }
+      }
+
+    /* --- Añadido: estilos para logo grande y efecto neon (igual que index.html) --- */
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transform-origin: center;
+    }
+    .logo-big {
+      width: 10px;           /* ANCHO AUMENTADO */
+      height: auto;
+      padding: 12px;          /* padding mayor para badge visible */
+      border-radius: 18px;
+      transition: transform .6s cubic-bezier(.2,.9,.2,1), filter .6s, opacity .6s;
+      filter: drop-shadow(0 26px 60px rgba(99,102,241,.14));
+      will-change: transform, opacity;
+      opacity: 0;
+      transform: translateY(8px) scale(.98);
+    }
+    @media (max-width: 1024px) {
+      .logo-big { width: 100px; }
+    }
+    @media (max-width: 768px) {
+      .logo-big { width: 110px; padding: 8px; border-radius: 14px; }
+    }
+    .logo-big.logo-animate {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .logo-big:hover { transform: translateY(-4px) rotate(-2deg) scale(1.02); filter: drop-shadow(0 26px 60px rgba(124,58,237,.14)); }
+
+    .neon-text {
+      display: inline-block;
+      font-family: 'Orbitron', Inter, sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.25rem, 4.2vw, 2.4rem); /* algo más larga en tamaño y responsive */
+      line-height: 1;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, #6ee7b7 0%, #60a5fa 45%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: 0.6px rgba(2,6,23,0.88); /* sutil contorno para separar del fondo */
+      /* glow contenido en la tipografía: finas sombras para dar profundidad sin "borrar" el borde */
+      text-shadow:
+        0 1px 0 rgba(255,255,255,0.04),
+        0 4px 12px rgba(96,165,250,0.10),
+        0 8px 22px rgba(124,58,237,0.06);
+      filter: drop-shadow(0 6px 18px rgba(96,165,250,0.06));
+      transition: transform .45s ease, opacity .45s ease;
+      will-change: transform, opacity;
+      vertical-align: middle;
+    }
+
+    /* Subrayado más limpio y proporcional; se adapta al ancho del texto */
+    .brand-underline {
+      display: inline-block;
+      height: 6px;
+      width: min(14rem, 28vw); /* proporcional para que acompañe la palabra */
+      border-radius: 999px;
+      background: linear-gradient(90deg,#60a5fa,#7c3aed,#6ee7b7);
+      box-shadow: 0 10px 28px rgba(124,58,237,0.09);
+      margin-left: .6rem;
+      vertical-align: middle;
+      transform-origin: left center;
+      transition: opacity .45s ease, transform .45s ease;
+    }
+
+    /* Ajustes responsivos: asegurar legibilidad en pantallas chicas */
+    @media (max-width: 768px) {
+      .neon-text { font-size: clamp(1rem, 5.2vw, 1.35rem); -webkit-text-stroke: 0.45px; }
+      .brand-underline { width: min(10rem, 38vw); height: 5px; margin-left: .4rem; }
+    }
+
+    /* Override mínimo para asegurar que no quede rastro del neon-brand */
+    .neon-text, .brand-underline { display: none !important; }
+  </style>
+  </head>
+  <body class="text-gray-800 font-sans text-[15px] lg:text-base leading-7">
+
+
+
+    <!-- Header y Navegación (actualizado: sticky, blur, search UI) -->
+    <header id="main-header" class="sticky top-0 z-50 header-contrast">
+      <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+        <!-- Navegación: solo enlaces y buscador; marca principal se muestra como título fuera del header -->
+        <div class="hidden sm:flex items-center gap-6">
+          <nav class="flex items-center gap-6">
+            <a href="#catalogo-productos" class="navbar-link text-sm font-medium text-ink-700">Catálogo</a>
+            <a href="#productos" class="navbar-link text-sm font-medium text-ink-700">Categorías</a>
+            <a href="contact.html" class="navbar-link text-sm font-medium text-ink-700">Contacto</a>
+          </nav>
+
+          <div class="relative max-w-xs w-72">
+            <input id="search-input" type="text" placeholder="Buscar… "
+                   class="w-full rounded-xl border border-ink/20 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                   autocomplete="off" aria-expanded="false" aria-controls="search-results" />
+            <ul id="search-results" role="listbox"
+                class="absolute mt-1 w-full bg-white border border-ink/10 rounded-xl shadow-md hidden overflow-hidden z-50"></ul>
+          </div>
+        </div>
+
+        <!-- Botón hamburguesa (sin cambios funcionales) -->
+        <button id="mobile-menu-button" class="sm:hidden z-50 p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500" aria-expanded="false" aria-controls="mobile-nav">
+          <span class="bar w-7 h-0.5 bg-gray-900 transition-all duration-300"></span>
+          <span class="bar w-7 h-0.5 bg-gray-900 transition-all duration-300"></span>
+          <span class="bar w-7 h-0.5 bg-gray-900 transition-all duration-300"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TITULO PRINCIPAL (fuera del header): Ensintonía + subtítulo -->
+
+
+    <!-- Buscador MOBILE (solo para pantallas pequeñas; no reescribe el header) -->
+    <div class="sm:hidden px-4 py-3">
+      <div class="relative">
+        <input id="search-input-mobile"
+               type="text"
+               placeholder="Buscar… (Ctrl+K)"
+               class="w-full rounded-xl border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+               autocomplete="off" aria-expanded="false" aria-controls="search-results-mobile">
+        <ul id="search-results-mobile" role="listbox"
+            class="absolute mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-md hidden overflow-hidden z-50"></ul>
+      </div>
+    </div>
+
+    <!-- Hero (nuevo) -->
+    <section class="bg-gradient-to-b from-brand-50 to-white py-16 md:py-24">
+      <div class="container mx-auto px-4 text-center">
+        <h1 class="text-5xl font-extrabold leading-tight text-ink-900 mb-4">Todo para tu hogar</h1>
+        <p class="text-lg text-ink-700 leading-relaxed max-w-2xl mx-auto mb-6">Diseño práctico, envío rápido y respaldo claro. Descubrí productos pensados para vivir mejor.</p>
+
+        <div class="flex items-center justify-center gap-4 mb-6">
+          <a href="#catalogo-productos" class="px-5 py-3 rounded-xl bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 shadow-sm active:translate-y-px">Ver catálogo</a>
+          <a href="https://wa.me/5491159914197" class="inline-flex items-center px-4 py-3 rounded-xl border border-ink/20 text-ink-900 text-sm font-medium hover:bg-ink/5 active:translate-y-px">
+            <i class="fab fa-whatsapp mr-2"></i> Consultar por WhatsApp
+          </a>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="flex items-center justify-center gap-6 text-sm text-ink-700">
+          <div class="inline-flex items-center gap-2">
+            <i class="fa-regular fa-star text-base text-ink-700"></i>
+            <div class="text-left">
+              <div class="font-semibold text-ink-900">4.8</div>
+              <div class="text-xs text-ink-500">Sobre 2.4k reseñas</div>
+            </div>
+          </div>
+          <div class="inline-flex items-center gap-2">
+            <i class="fa-regular fa-bag-shopping text-base text-ink-700"></i>
+            <div class="text-left">
+              <div class="font-semibold text-ink-900">+1.2k</div>
+              <div class="text-xs text-ink-500">ventas / mes</div>
+            </div>
+          </div>
+          <div class="inline-flex items-center gap-2">
+            <i class="fa-regular fa-shield text-base text-ink-700"></i>
+            <div class="text-left">
+              <div class="font-semibold text-ink-900">Garantía </div>
+              <div class="text-xs text-ink-500">Cambio y soporte</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección de Categorías (skeletons por defecto mientras carga) -->
+    <section id="productos" class="py-16 sm:py-20 section-bg-gradient">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl sm:text-4xl font-bold text-center mb-12 sm:mb-16 text-gray-900 animate-fade-in-down">Nuestras Categorías</h2>
+            <div id="categories-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Skeletons: 6 items -->
+                <div class="bg-white rounded-2xl border border-ink/10 shadow-sm animate-pulse">
+                  <div class="aspect-[4/3] bg-ink/10 rounded-t-2xl"></div>
+                  <div class="p-4 space-y-3">
+                    <div class="h-5 bg-ink/10 rounded"></div>
+                    <div class="h-4 bg-ink/10 rounded w-10/12"></div>
+                    <div class="h-8 bg-ink/10 rounded w-5/12 ml-auto"></div>
+                  </div>
+                </div>
+                <div class="bg-white rounded-2xl border border-ink/10 shadow-sm animate-pulse"><div class="aspect-[4/3] bg-ink/10 rounded-t-2xl"></div><div class="p-4 space-y-3"><div class="h-5 bg-ink/10 rounded"></div><div class="h-4 bg-ink/10 rounded w-10/12"></div><div class="h-8 bg-ink/10 rounded w-5/12 ml-auto"></div></div></div>
+                <div class="bg-white rounded-2xl border border-ink/10 shadow-sm animate-pulse"><div class="aspect-[4/3] bg-ink/10 rounded-t-2xl"></div><div class="p-4 space-y-3"><div class="h-5 bg-ink/10 rounded"></div><div class="h-4 bg-ink/10 rounded w-10/12"></div><div class="h-8 bg-ink/10 rounded w-5/12 ml-auto"></div></div></div>
+                <div class="bg-white rounded-2xl border border-ink/10 shadow-sm animate-pulse"><div class="aspect-[4/3] bg-ink/10 rounded-t-2xl"></div><div class="p-4 space-y-3"><div class="h-5 bg-ink/10 rounded"></div><div class="h-4 bg-ink/10 rounded w-10/12"></div><div class="h-8 bg-ink/10 rounded w-5/12 ml-auto"></div></div></div>
+                <div class="bg-white rounded-2xl border border-ink/10 shadow-sm animate-pulse"><div class="aspect-[4/3] bg-ink/10 rounded-t-2xl"></div><div class="p-4 space-y-3"><div class="h-5 bg-ink/10 rounded"></div><div class="h-4 bg-ink/10 rounded w-10/12"></div><div class="h-8 bg-ink/10 rounded w-5/12 ml-auto"></div></div></div>
+                <div class="bg-white rounded-2xl border border-ink/10 shadow-sm animate-pulse"><div class="aspect-[4/3] bg-ink/10 rounded-t-2xl"></div><div class="p-4 space-y-3"><div class="h-5 bg-ink/10 rounded"></div><div class="h-4 bg-ink/10 rounded w-10/12"></div><div class="h-8 bg-ink/10 rounded w-5/12 ml-auto"></div></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nueva Sección para Productos (Catálogo General) -->
+    <section id="catalogo-productos" class="py-16 sm:py-20 bg-white">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl sm:text-4xl font-bold text-center mb-12 sm:mb-16 text-gray-900 animate-fade-in-down">Todos Nuestros Productos</h2>
+
+            <div id="contenedor-productos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Skeletons: 8 items -->
+                <div class="bg-white rounded-2xl border border-ink/10 shadow-sm animate-pulse">
+                  <div class="aspect-[4/3] bg-ink/10 rounded-t-2xl"></div>
+                  <div class="p-4 space-y-3">
+                    <div class="h-5 bg-ink/10 rounded"></div>
+                    <div class="h-4 bg-ink/10 rounded w-10/12"></div>
+                    <div class="h-8 bg-ink/10 rounded w-5/12 ml-auto"></div>
+                  </div>
+                </div>
+                <!-- duplicá hasta 8 -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 sm:py-10 shadow-md">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm sm:text-lg">&copy; 2025 Ensintonía. Todos los derechos reservados.</p>
+            <p class="text-xs sm:text-sm mt-2 text-gray-400">Diseñado con <span class="text-red-500">&hearts;</span> para tu hogar.</p>
+            <p id="user-id-display" class="text-xs mt-2 text-gray-500">ID de Usuario: Cargando...</p>
+            <p class="text-xs mt-2 text-gray-500">Site Creator: Maximo Lavagetto</p> <!-- Added this line -->
+        </div>
+    </footer>
+
+    <!-- Botón de WhatsApp flotante -->
+    <div class="fixed bottom-6 left-6 z-50">
+        <a href="https://wa.me/5491159914197" target="_blank" rel="noopener noreferrer" class="btn-whatsapp text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition duration-300">
+            <!-- Ícono de WhatsApp de Font Awesome -->
+            <i class="fab fa-whatsapp"></i>
+        </a>
+    </div>
+
+    <!-- Modal para la imagen en pantalla completa (nueva implementación de zoom) -->
+    <div id="image-fullscreen-modal" class="image-modal-overlay">
+        <div class="image-modal-content">
+            <img id="fullscreen-image" loading="lazy" decoding="async" src="" alt="Imagen en pantalla completa" class="shadow-lg">
+            <button id="close-image-modal" class="image-modal-close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- PRODUCT DETAIL MODAL (pegado antes del modal de imagen fullscreen) -->
+    <div id="pd-overlay" class="fixed inset-0 z-[110] hidden" aria-hidden="true">
+      <div class="absolute inset-0 bg-black/50" data-close></div>
+
+      <div class="absolute inset-0 md:inset-auto md:top-6 md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:w-[min(1100px,96vw)]
+                  bg-white rounded-none md:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-4 py-3 border-b">
+          <h2 id="pd-title" class="text-lg font-semibold">Nombre del producto</h2>
+          <button id="pd-close" class="p-2 rounded hover:bg-gray-100" aria-label="Cerrar" data-close>✕</button>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-auto">
+          <div class="grid md:grid-cols-2 gap-6 p-4">
+            <!-- Galería -->
+            <div>
+              <div class="aspect-square bg-gray-50 rounded-xl overflow-hidden">
+                <img id="pd-image" src="" alt="" class="w-full h-full object-contain">
+              </div>
+              <div id="pd-thumbs" class="mt-3 flex gap-2 overflow-x-auto"></div>
+            </div>
+
+            <!-- Info -->
+            <div class="space-y-3">
+              <div class="text-2xl font-bold text-gray-900">$ <span id="pd-price">0</span></div>
+              <div id="pd-badges" class="flex gap-2 flex-wrap"></div>
+
+              <!-- Tabs -->
+              <div class="mt-4">
+                <div class="flex gap-2 border-b">
+                  <button class="pd-tab px-3 py-2 text-sm font-semibold" data-tab="desc">Descripción</button>
+                  <button class="pd-tab px-3 py-2 text-sm font-semibold" data-tab="specs">Especificaciones</button>
+                  <button class="pd-tab px-3 py-2 text-sm font-semibold" data-tab="warranty">Garantía</button>
+                </div>
+                <div class="mt-3">
+                  <div id="pd-pane-desc" class="pd-pane text-sm leading-6 text-gray-700"></div>
+                  <div id="pd-pane-specs" class="pd-pane hidden text-sm leading-6 text-gray-700"></div>
+                  <div id="pd-pane-warranty" class="pd-pane hidden text-sm leading-6 text-gray-700"></div>
+                </div>
+              </div>
+
+              <!-- CTA -->
+              <div class="pt-2 flex flex-wrap gap-3">
+                <a id="pd-whatsapp" href="#" target="_blank" rel="noopener" class="px-4 py-2 rounded-xl bg-green-600 text-white">Consultar por WhatsApp</a>
+                <button id="pd-add" class="px-4 py-2 rounded-xl border">Agregar al carrito</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-4 py-3 border-t text-xs text-gray-500">
+          ID: <span id="pd-id"></span> • Stock: <span id="pd-stock">–</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enlace al archivo JavaScript externo -->
+    <script src="main.js" type="module"></script>
+
+    <!-- Mobile nav panel (asegurate de ubicarlo donde ya está #mobile-nav) -->
+  <nav id="mobile-nav" class="hidden fixed top-0 right-0 h-full w-72 bg-white/95 backdrop-blur shadow-lg p-6 transform translate-x-full z-50 transition-transform duration-300 ease-in-out" aria-hidden="true" role="menu" aria-label="Menú móvil">
+    <div class="flex items-center justify-between mb-6">
+      <a href="#" class="text-lg font-extrabold tracking-tight text-ink-900">Ensintonía</a>
+       <button id="mobile-nav-close" class="p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none" aria-label="Cerrar menú">
+        <span class="sr-only">Cerrar</span>
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+ 
+     <ul class="space-y-4">
+       <li><a id="catalog-link-mobile" href="#catalogo-productos" class="block text-lg font-medium text-ink-700 hover:text-brand-700">Catálogo</a></li>
+       <li><a href="contact.html" class="block text-lg font-medium text-ink-700 hover:text-brand-700">Contacto</a></li>
+ 
+       <!-- Bloque "Categorías" (clases reducidas para emparejar tamaño) -->
+       <li class="relative w-full">
+         <button id="categories-toggle-button"
+                 class="text-lg font-medium text-gray-800 hover:text-blue-600 block py-2 w-full text-left flex justify-between items-center">
+           <span>Categorías</span>
+           <i id="categories-toggle-icon" class="fas fa-chevron-down transition-transform duration-300"></i>
+         </button>
+         <ul id="categories-submenu" class="hidden flex-col space-y-2 pl-4 pt-2 bg-gray-50 rounded-lg mt-2">
+           <!-- Spinner inicial hasta que cargue Firestore -->
+           <li id="categories-loading-spinner-mobile" class="text-gray-600 text-base py-2 text-center">
+             <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+             <p class="mt-2">Cargando categorías...</p>
+           </li>
+         </ul>
+       </li>
+     </ul>
+ 
+     <!-- ...resto del nav ... -->
+   </nav>
+
+  <!-- Añadí estilos mínimos para la animación de la hamburguesa (si no están ya) -->
+  <style>
+    #mobile-menu-button .bar { display:block; transform-origin:center; }
+    #mobile-menu-button.open .bar:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+    #mobile-menu-button.open .bar:nth-child(2){ opacity: 0; }
+    #mobile-menu-button.open .bar:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
+  </style>
+</body>
+</html>
