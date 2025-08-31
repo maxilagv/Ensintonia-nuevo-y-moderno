@@ -184,6 +184,8 @@ const createProductForm = document.getElementById('createProductForm');
 const productCategorySelect = document.getElementById('productCategory');
 const productStockInput = document.getElementById('productStock');
 const productStatusSelect = document.getElementById('productStatus'); // Nuevo select para el estado
+const productSpecificationsTextarea = document.getElementById('productSpecifications'); // Nuevo campo especificaciones
+const productWarrantyInput = document.getElementById('productWarranty'); // Nuevo campo garantía
 
 const editProductSection = document.getElementById('editProduct');
 const selectProductToEdit = document.getElementById('selectProductToEdit');
@@ -196,6 +198,8 @@ const editedProductStockInput = document.getElementById('editedProductStock');
 const editedProductComponentsUrlInput = document.getElementById('editedProductComponentsUrl');
 const editedProductVideoUrlInput = document.getElementById('editedProductVideoUrl');
 const editedProductStatusSelect = document.getElementById('editedProductStatus'); // Nuevo select para el estado
+const editedProductSpecificationsTextarea = document.getElementById('editedProductSpecifications'); // Nuevo campo especificaciones edición
+const editedProductWarrantyInput = document.getElementById('editedProductWarranty'); // Nuevo campo garantía edición
 const saveProductChangesButton = editProductSection.querySelector('.action-button');
 
 const manageStockSection = document.getElementById('manageStock');
@@ -465,6 +469,8 @@ async function populateProductEditForm(productId) {
         editedProductComponentsUrlInput.value = '';
         editedProductVideoUrlInput.value = '';
         editedProductStatusSelect.value = 'draft';
+    editedProductSpecificationsTextarea.value = '';
+    editedProductWarrantyInput.value = '';
         return;
     }
     try {
@@ -483,6 +489,25 @@ async function populateProductEditForm(productId) {
             editedProductComponentsUrlInput.value = productData.componentsUrl || '';
             editedProductVideoUrlInput.value = productData.videoUrl || '';
             editedProductStatusSelect.value = productData.status || 'draft';
+            // Cargar especificaciones (array u objeto) en formato texto
+            if (productData.specifications) {
+                if (Array.isArray(productData.specifications)) {
+                    editedProductSpecificationsTextarea.value = productData.specifications.map(spec => {
+                        if (typeof spec === 'string') return spec;
+                        if (spec && spec.key) return `${spec.key}: ${spec.value ?? ''}`;
+                        return '';
+                    }).filter(Boolean).join('\n');
+                } else if (typeof productData.specifications === 'object') {
+                    editedProductSpecificationsTextarea.value = Object.entries(productData.specifications)
+                        .map(([k,v]) => `${k}: ${v}`)
+                        .join('\n');
+                } else if (typeof productData.specifications === 'string') {
+                    editedProductSpecificationsTextarea.value = productData.specifications;
+                }
+            } else {
+                editedProductSpecificationsTextarea.value = '';
+            }
+            editedProductWarrantyInput.value = productData.warranty || '';
             console.log("populateProductEditForm: Datos de producto cargados:", productData);
         } else {
             console.log("populateProductEditForm: Producto no encontrado para ID:", productId);
@@ -521,16 +546,32 @@ async function updateProductInFirestore(productId, newName, newPrice, newImageUr
             stock: newStock,
             componentsUrl: newComponentsUrl,
             videoUrl: newVideoUrl,
-            status: newStatus
+            status: newStatus,
+            specifications: parseSpecifications(editedProductSpecificationsTextarea?.value),
+            warranty: editedProductWarrantyInput?.value?.trim() || null
         });
         showMessageBox(`Producto "${newName}" actualizado exitosamente.`, 'success');
         loadProductsForEdit();
         loadProductsForStockManagement();
         populateProductEditForm('');
+    if (editedProductSpecificationsTextarea) editedProductSpecificationsTextarea.value = '';
+    if (editedProductWarrantyInput) editedProductWarrantyInput.value = '';
     } catch (error) {
         console.error("Error al actualizar el producto:", error);
         showMessageBox("Error al actualizar el producto. Inténtalo de nuevo.", 'error');
     }
+}
+
+// Helper: parsea texto de especificaciones a estructura uniforme (array de {key,value})
+function parseSpecifications(raw) {
+    if (!raw) return [];
+    return raw.split(/\r?\n/)
+        .map(l => l.trim())
+        .filter(l => l.length)
+        .map(line => {
+            const [k, ...rest] = line.split(':');
+            return { key: k ? k.trim() : line, value: rest.length ? rest.join(':').trim() : '' };
+        });
 }
 
 async function deleteProductFromFirestore(productId) {
@@ -594,6 +635,8 @@ async function deleteProductFromFirestore(productId) {
             loadProductsForEdit();
             loadProductsForStockManagement();
             populateProductEditForm('');
+            if (editedProductSpecificationsTextarea) editedProductSpecificationsTextarea.value = '';
+            if (editedProductWarrantyInput) editedProductWarrantyInput.value = '';
         } catch (error) {
             console.error("Error al eliminar el producto:", error);
             showMessageBox("Error al eliminar el producto.", 'error');
@@ -938,6 +981,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const productComponentsUrl = document.getElementById('productComponentsUrl').value;
             const productVideoUrl = document.getElementById('productVideoUrl').value;
             const productStatus = productStatusSelect.value;
+            const productSpecifications = parseSpecifications(productSpecificationsTextarea?.value);
+            const productWarranty = productWarrantyInput?.value?.trim() || null;
 
             if (!productName || isNaN(productPrice) || productPrice <= 0 || !productCategoryId || isNaN(productStock) || productStock < 0 || !productStatus) {
                 showMessageBox("Nombre, precio (mayor a 0), categoría, stock (mayor o igual a 0) y estado son obligatorios.", "warning");
@@ -964,6 +1009,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 componentsUrl: productComponentsUrl,
                 videoUrl: productVideoUrl,
                 status: productStatus,
+                specifications: productSpecifications,
+                warranty: productWarranty,
                 createdAt: serverTimestamp()
             });
             showMessageBox(`Producto "${productName}" creado exitosamente.`, 'success');
@@ -973,6 +1020,8 @@ document.addEventListener('DOMContentLoaded', () => {
             productCategorySelect.value = '';
             productStockInput.value = 0;
             productStatusSelect.value = 'draft';
+            if (productSpecificationsTextarea) productSpecificationsTextarea.value = '';
+            if (productWarrantyInput) productWarrantyInput.value = '';
         });
     }
 
