@@ -268,6 +268,16 @@
                         <label for="productDescription" class="block text-lg font-medium mb-2">Descripción:</label>
                         <textarea id="productDescription" class="input-field" rows="3" placeholder="Descripción breve del producto"></textarea>
                     </div>
+                    <!-- Nuevo: Especificaciones del producto (texto libre o lista clave: valor) -->
+                    <div>
+                        <label for="productSpecifications" class="block text-lg font-medium mb-2">Especificaciones (una por línea, formato Clave: Valor):</label>
+                        <textarea id="productSpecifications" class="input-field" rows="4" placeholder="Ej:\nCapacidad: 300L\nColor: Blanco\nEficiencia: A++"></textarea>
+                    </div>
+                    <!-- Nuevo: Garantía -->
+                    <div>
+                        <label for="productWarranty" class="block text-lg font-medium mb-2">Garantía:</label>
+                        <input type="text" id="productWarranty" class="input-field" placeholder="Ej: 12 meses, 2 años limitada">
+                    </div>
                     <div>
                         <label for="productStock" class="block text-lg font-medium mb-2">Stock Inicial:</label>
                         <input type="number" id="productStock" class="input-field" min="0" value="0" required>
@@ -330,6 +340,16 @@
                     <div>
                         <label for="editedProductDescription" class="block text-lg font-medium mb-2">Descripción:</label>
                         <textarea id="editedProductDescription" class="input-field" rows="3" placeholder="Nueva descripción del producto"></textarea>
+                    </div>
+                    <!-- Nuevo: Especificaciones del producto en edición -->
+                    <div>
+                        <label for="editedProductSpecifications" class="block text-lg font-medium mb-2">Especificaciones (una por línea, formato Clave: Valor):</label>
+                        <textarea id="editedProductSpecifications" class="input-field" rows="4" placeholder="Actualiza las especificaciones"></textarea>
+                    </div>
+                    <!-- Nuevo: Garantía en edición -->
+                    <div>
+                        <label for="editedProductWarranty" class="block text-lg font-medium mb-2">Garantía:</label>
+                        <input type="text" id="editedProductWarranty" class="input-field" placeholder="Actualiza la garantía">
                     </div>
                     <div>
                         <label for="editedProductStock" class="block text-lg font-medium mb-2">Stock Actual:</label>
