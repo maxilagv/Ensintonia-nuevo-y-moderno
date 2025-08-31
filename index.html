@@ -48,8 +48,8 @@
       --glass: rgba(255,255,255,0.06);
       --muted: #94a3b8;
 
-      --futuristic-ink: #e6f0ff;
-      --futuristic-mute: #9fb3d9;
+      --futuristic-ink: #e6f0ff; /* Light white/blue for main text */
+      --futuristic-mute: #9fb3d9; /* Muted light blue for secondary text */
     }
 
     /* Fondo azul futurista (forzado con !important para evitar override por Tailwind) */
@@ -64,7 +64,7 @@
     }
 
     /* Ajustes de contraste para textos secundarios */
-    .muted { color: var(--futuristic-mute) !important; }
+    .muted, .text-muted-700 { color: var(--futuristic-mute) !important; }
     .text-ink { color: var(--futuristic-ink) !important; }
 
     /* Header / logo: mucho más grande y animado */
@@ -86,7 +86,15 @@
     }
     .logo-big:hover{ transform: translateY(-4px) rotate(-2deg) scale(1.02); filter: drop-shadow(0 26px 60px rgba(124,58,237,.14)); }
 
-    /* Futuristic heading style */
+    /* Header scroll effect */
+    #main-header.scrolled {
+      background-color: rgba(6, 18, 41, 0.9); /* Slightly darker, more opaque */
+      box-shadow: 0 4px 18px rgba(0,0,0,0.3);
+      border-color: rgba(49, 62, 85, 0.4);
+    }
+
+
+    /* Futuristic heading style - Refined */
     .neon-text {
       font-family: 'Orbitron', Inter, sans-serif;
       font-weight:700;
@@ -95,14 +103,14 @@
       background-clip: text;
       color: transparent;
       letter-spacing: -0.01em;
-      text-shadow: 0 6px 30px rgba(99,102,241,0.08);
+      /* Removed aggressive text-shadow from here */
     }
 
-    .neon-glow {
+    /* Subtle, unified glow for neon-text */
+    .hero-title-shadow { /* New class for the subtle shadow */
       text-shadow:
-        0 2px 0 rgba(255,255,255,0.02),
-        0 6px 18px rgba(124,58,237,0.12),
-        0 10px 40px rgba(96,165,250,0.06);
+        0 4px 18px rgba(96,165,250,0.1), /* Soft blue glow */
+        0 2px 8px rgba(124,58,237,0.08); /* Soft purple glow */
     }
 
     /* Animated gradient underline for brand */
@@ -114,19 +122,33 @@
       background: linear-gradient(90deg,#60a5fa,#7c3aed,#6ee7b7);
       box-shadow: 0 10px 30px rgba(124,58,237,0.08);
       transform-origin:left center;
-      animation: underline-slide 3.8s linear infinite;
+      animation: underline-slide 3.8s linear infinite alternate; /* Added alternate */
       opacity:.95;
+      filter: blur(0.5px); /* Subtle blur */
     }
     @keyframes underline-slide {
       0%{ transform: translateX(-8px) scaleX(.98); filter: blur(.2px) }
-      50%{ transform: translateX(8px) scaleX(1.02); filter: blur(.8px) }
+      50%{ transform: translateX(8px) scaleX(1.02); filter: blur(1px) } /* Increased blur at 50% */
       100%{ transform: translateX(-8px) scaleX(.98); }
     }
 
     /* Subtle floating decorative shapes */
-    .hero-deco { position:absolute; right:-6rem; top:-6rem; width:36rem; height:36rem; opacity:.06; pointer-events:none; filter: blur(18px); transform: rotate(18deg); }
+    .hero-deco {
+      position:absolute; right:-6rem; top:-6rem; width:36rem; height:36rem; opacity:.06; pointer-events:none; filter: blur(18px); transform: rotate(18deg);
+      animation: slow-rotate 40s linear infinite; /* New animation */
+    }
+    @keyframes slow-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
     /* Button glow / micro-animations */
+    .btn {
+      transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .btn:hover {
+      transform: translateY(-2px) scale(1.01);
+    }
     .btn-glow {
       position:relative;
       overflow:hidden;
@@ -221,48 +243,31 @@
       .card-polish.float-subtle { animation: none; }
     }
 
-    /* Accent small text */
-    .muted { color: var(--muted); }
-
     /* Make text inside light/white cards readable on the dark futuristic page */
-    .card-polish,
-    .card-hover,
-    .bg-white.card-polish,
-    .bg-white.card-hover,
-    .bg-white {
-      color: #0f172a; /* texto principal oscuro para legibilidad */
+    .bg-white, .bg-white\/60 {
+      color: var(--futuristic-ink); /* texto principal claro para legibilidad */
     }
 
     /* Muted text inside cards: slightly lighter but still dark */
-    .card-polish .muted,
-    .card-hover .muted,
-    .bg-white .muted {
-      color: rgba(15,23,42,0.65);
+    .bg-white .muted, .bg-white\/60 .muted {
+      color: var(--futuristic-mute);
     }
 
     /* Links/buttons inside cards: accent color (brand) */
-    .card-polish a,
-    .card-hover a,
-    .bg-white a {
-      color: #1e40af; /* brand-500 */
+    .bg-white a, .bg-white\/60 a {
+      color: var(--brand-1); /* brand-1 (mint) */
       text-decoration: none;
     }
 
     /* Headings inside cards slightly stronger */
-    .card-polish h2,
-    .card-polish h3,
-    .card-polish h4,
-    .card-hover h2,
-    .card-hover h3,
-    .card-hover h4,
-    .bg-white h2,
-    .bg-white h3,
-    .bg-white h4 {
-      color: #071133;
+    .bg-white h2, .bg-white h3, .bg-white h4,
+    .bg-white\/60 h2, .bg-white\/60 h3, .bg-white\/60 h4 {
+      color: var(--futuristic-ink);
     }
 
     /* Ensure components inherit color unless explicitly overridden */
-    .card-polish * , .card-hover * , .bg-white * { color: inherit; }
+    .bg-white * , .bg-white\/60 * { color: inherit; }
+
 
     /* Mobile-first polish: centrar y hacer estético en pantallas pequeñas */
     @media (max-width: 640px) {
@@ -335,6 +340,131 @@
       body { -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
       .muted { opacity: 0.9; }
     }
+
+    /* Hamburguesa -> X */
+    #mobile-menu-button .bar{transition:transform .35s ease, opacity .25s ease;}
+    #mobile-menu-button.open .bar:nth-child(1){transform:translateY(6px) rotate(45deg);}
+    #mobile-menu-button.open .bar:nth-child(2){opacity:0;}
+    #mobile-menu-button.open .bar:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+
+    /* Panel móvil */
+    #mobile-nav{position:fixed; inset:0; z-index:40; display:none;}
+    #mobile-nav[data-state="opening"],
+    #mobile-nav[data-state="open"]{display:block;}
+    #mobile-nav .mn-overlay{position:absolute; inset:0; background:rgba(15,23,42,.55); backdrop-filter:blur(4px); opacity:0; transition:opacity .35s;}
+    #mobile-nav[data-state="open"] .mn-overlay{opacity:1;}
+    #mobile-nav .mn-panel{
+      position:absolute; top:0; right:0; height:100%; width:18rem; max-width:100%;
+      background:#ffffff; padding:1.25rem 1.25rem 2.5rem; overflow-y:auto;
+      box-shadow: -8px 0 28px -4px rgba(15,23,42,.25);
+      transform:translateX(100%); transition:transform .38s cubic-bezier(.22,.9,.22,1);
+      display:flex; flex-direction:column; gap:1rem;
+    }
+    body.dark #mobile-nav .mn-panel{background:#0f172a; color:#e2e8f0;}
+    #mobile-nav[data-state="open"] .mn-panel{transform:translateX(0);}
+
+    #mobile-nav a{display:block; padding:.6rem .75rem; border-radius:.75rem; font-size:.95rem; font-weight:500; color:#0f172a;}
+    #mobile-nav a:hover{background:#f1f5f9;}
+    body.dark #mobile-nav a{color:#e2e8f0;}
+    body.dark #mobile-nav a:hover{background:#1e293b;}
+
+    #mobile-nav h6{font-size:.68rem; letter-spacing:.08em; font-weight:600; text-transform:uppercase; color:#64748b; margin:.25rem .25rem .15rem;}
+    body.dark #mobile-nav h6{color:#64748b;}
+
+    /* Reduce panel en pantallas muy bajas */
+    @media (max-height:560px){
+      #mobile-nav .mn-panel{padding-bottom:4rem;}
+    }
+
+    /* Nuevos estilos para las tarjetas de "Quiénes somos" */
+    .card-modern {
+      background: rgba(15, 23, 42, 0.7); /* Dark, slightly transparent ink color */
+      border: 1px solid rgba(49, 62, 85, 0.6); /* Darker, subtle border */
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2); /* Stronger shadow */
+      transition: all 0.3s ease-in-out;
+      overflow: hidden;
+      position: relative;
+      color: var(--futuristic-ink); /* Light text for contrast */
+    }
+
+    .card-modern:hover {
+      transform: translateY(-8px) scale(1.01);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.3);
+      border-color: var(--brand-1); /* Mint border on hover */
+    }
+
+    .card-modern::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, rgba(110,231,183,0.1) 0%, transparent 70%); /* Mint light effect */
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+      pointer-events: none;
+    }
+
+    .card-modern:hover::before {
+      opacity: 1;
+    }
+
+    .card-modern h3 {
+      color: var(--brand-1); /* Mint color for titles */
+    }
+
+    .card-modern p {
+      color: var(--futuristic-mute); /* Muted light blue for readability */
+    }
+
+    /* Estilos para las tarjetas de "Propuesta de valor" y "Logística" */
+    .value-card {
+      background: rgba(15, 23, 42, 0.7); /* Dark, slightly transparent ink color */
+      border: 1px solid rgba(49, 62, 85, 0.6); /* Darker, subtle border */
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      transition: all 0.3s ease-in-out;
+      color: var(--futuristic-ink); /* Light text for contrast */
+    }
+
+    .value-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+      border-color: var(--brand-2); /* Purple border on hover */
+    }
+
+    .value-card svg {
+      color: var(--brand-1); /* Mint for icons */
+    }
+
+    .value-card strong {
+      color: var(--futuristic-ink); /* Light text for important elements */
+    }
+
+    .value-card div:last-child {
+      color: var(--futuristic-mute); /* Muted light blue for descriptions */
+    }
+
+    /* Estilos para las categorías y otras tarjetas pequeñas */
+    .category-tag {
+      background-color: rgba(255, 255, 255, 0.1); /* Light translucent white */
+      border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle light border */
+      color: var(--futuristic-ink); /* Light text for contrast */
+      transition: all 0.2s ease-in-out;
+    }
+
+    .category-tag:hover {
+      background-color: rgba(255, 255, 255, 0.2); /* Slightly more opaque white on hover */
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Override Tailwind bg-white/60 for sections to use custom dark transparent background */
+    .section.bg-white\/60 {
+      background: rgba(15, 23, 42, 0.45) !important; /* Lighter dark transparent for sections */
+      border-top: 1px solid rgba(49, 62, 85, 0.3);
+      border-bottom: 1px solid rgba(49, 62, 85, 0.3);
+    }
   </style>
 </head>
 
@@ -344,7 +474,7 @@
       <a class="flex items-center gap-4 logo-wrap" href="#">
         <img class="logo-big" src="https://i.postimg.cc/GtWS4w0z/Captura-de-pantalla-2025-08-21-134638.png" alt="Ensintonía logo" loading="lazy" decoding="async">
         <div>
-          <div class="neon-text neon-glow text-2xl leading-tight">Ensintonía</div>
+          <div class="neon-text hero-title-shadow text-2xl leading-tight">Ensintonía</div>
           <div class="text-sm muted -mt-1">Importadora directa • Electrónica & Hogar</div>
           <div class="mt-2 brand-underline"></div>
         </div>
@@ -355,15 +485,15 @@
         <a href="#propuesta-valor" class="text-sm text-ink hover:text-brand-700 transition">Propuesta</a>
         <a id="catalog-link-header" href="/catalogo.html" class="text-sm text-ink hover:text-brand-700 transition">Catálogo</a>
         <a href="#contacto" class="text-sm text-ink hover:text-brand-700 transition">Contacto</a>
-        <a href="https://wa.me/5491159914197" target="_blank" rel="noopener" class="ml-4 px-4 py-2 rounded-full bg-green-600 text-white text-sm shadow-sm hover:bg-green-700 transition">WhatsApp</a>
+        <a href="https://wa.me/5491159914197" target="_blank" rel="noopener" class="ml-4 px-4 py-2 rounded-full bg-green-600 text-white text-sm shadow-sm hover:bg-green-700 transition btn">WhatsApp</a>
       </nav>
 
       <!-- mobile right controls -->
       <div class="md:hidden flex items-center gap-2">
-        <button id="mobile-search-toggle" class="p-2 rounded-lg text-ink hover:bg-gray-100">
+        <button id="mobile-search-toggle" class="p-2 rounded-lg text-ink hover:bg-gray-100 btn">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/></svg>
         </button>
-        <button id="mobile-menu-button" class="sm:hidden z-50 p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none" aria-expanded="false" aria-controls="mobile-nav">
+        <button id="mobile-menu-button" class="sm:hidden z-50 p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none btn" aria-expanded="false" aria-controls="mobile-nav">
           <span class="bar block w-7 h-0.5 bg-gray-900 mb-1 rounded transition-all duration-300"></span>
           <span class="bar block w-7 h-0.5 bg-gray-900 mb-1 rounded transition-all duration-300"></span>
           <span class="bar block w-7 h-0.5 bg-gray-900 rounded transition-all duration-300"></span>
@@ -394,7 +524,7 @@
     <div class="site-container text-center">
       <div class="mx-auto max-w-3xl">
         <div class="accent-line mx-auto mb-6 fade-up-init" id="hero-accent"></div>
-        <h1 class="title text-4xl sm:text-5xl font-extrabold text-ink leading-tight mb-4 fade-up-init neon-text" id="hero-title">
+        <h1 class="title text-4xl sm:text-5xl font-extrabold text-ink leading-tight mb-4 fade-up-init neon-text hero-title-shadow" id="hero-title">
           Somos <span class="brand">Ensintonía</span>
         </h1>
         <p class="subtitle text-lg muted mb-8 fade-up-init" id="hero-sub">
@@ -402,7 +532,7 @@
         </p>
 
         <div class="flex items-center justify-center gap-4 flex-wrap fade-up-init" id="hero-ctas">
-          <a id="hero-catalog-btn" href="/catalogo.html" class="btn btn-glow btn-glow btn-glow bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-2xl shadow-sm card-polish btn-glow">
+          <a id="hero-catalog-btn" href="/catalogo.html" class="btn btn-glow bg-brand-500 hover:bg-brand-600 text-white px-6 py-3 rounded-2xl shadow-sm card-polish btn-glow">
             Ver catálogo
           </a>
           <a href="https://wa.me/5491159914197" target="_blank" rel="noopener" class="btn btn-outline border border-gray-200 px-5 py-3 rounded-2xl text-ink hover:bg-gray-50 card-polish">
@@ -427,19 +557,19 @@
           <p class="text-muted-700">Nuestra propuesta mezcla <strong>stock real</strong>, <strong>asesoría honesta</strong> y <strong>logística simple</strong>. Si buscás electrónica para uso personal o para tu negocio, queremos que encuentres lo esencial: buen producto, buen precio y buena atención.</p>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <div class="p-6 bg-white rounded-2xl shadow-sm card-hover">
+          <div class="p-6 rounded-2xl shadow-sm card-modern">
             <h3 class="font-semibold mb-2">Importación & distribución</h3>
             <p class="text-sm text-muted-700">Líneas de audio, hogar y accesorios con lotes escalables.</p>
           </div>
-          <div class="p-6 bg-white rounded-2xl shadow-sm card-hover">
+          <div class="p-6 rounded-2xl shadow-sm card-modern">
             <h3 class="font-semibold mb-2">Asesoría de compra</h3>
             <p class="text-sm text-muted-700">Te ayudamos a elegir con datos reales y expectativas claras.</p>
           </div>
-          <div class="p-6 bg-white rounded-2xl shadow-sm card-hover">
+          <div class="p-6 rounded-2xl shadow-sm card-modern">
             <h3 class="font-semibold mb-2">Posventa</h3>
             <p class="text-sm text-muted-700">Soporte humano y gestión de garantías.</p>
           </div>
-          <div class="p-6 bg-white rounded-2xl shadow-sm card-hover">
+          <div class="p-6 rounded-2xl shadow-sm card-modern">
             <h3 class="font-semibold mb-2">Alianzas B2B</h3>
             <p class="text-sm text-muted-700">Precios por volumen y reposición programada.</p>
           </div>
@@ -453,29 +583,29 @@
     <div class="site-container">
       <h2 class="section-title text-2xl font-bold mb-6">Nuestra propuesta de valor</h2>
       <ul class="grid sm:grid-cols-2 gap-4">
-        <li class="p-4 bg-white rounded-2xl shadow-sm flex items-start gap-3 card-hover">
-          <svg class="w-6 h-6 text-brand-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <li class="p-4 rounded-2xl shadow-sm flex items-start gap-3 value-card">
+          <svg class="w-6 h-6 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           <div>
             <strong>Importadora directa</strong>
             <div class="text-sm text-muted-700">Menos intermediarios, mejor precio.</div>
           </div>
         </li>
-        <li class="p-4 bg-white rounded-2xl shadow-sm flex items-start gap-3 card-hover">
-          <svg class="w-6 h-6 text-brand-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M6 7v10"/></svg>
+        <li class="p-4 rounded-2xl shadow-sm flex items-start gap-3 value-card">
+          <svg class="w-6 h-6 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M6 7v10"/></svg>
           <div>
             <strong>Curaduría de marcas</strong>
             <div class="text-sm text-muted-700">Probamos y elegimos lo mejor.</div>
           </div>
         </li>
-        <li class="p-4 bg-white rounded-2xl shadow-sm flex items-start gap-3 card-hover">
-          <svg class="w-6 h-6 text-brand-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M5 10v10"/></svg>
+        <li class="p-4 rounded-2xl shadow-sm flex items-start gap-3 value-card">
+          <svg class="w-6 h-6 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M5 10v10"/></svg>
           <div>
             <strong>Stock actualizado</strong>
             <div class="text-sm text-muted-700">Inventario vivo y entregas ágiles.</div>
           </div>
         </li>
-        <li class="p-4 bg-white rounded-2xl shadow-sm flex items-start gap-3 card-hover">
-          <svg class="w-6 h-6 text-brand-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+        <li class="p-4 rounded-2xl shadow-sm flex items-start gap-3 value-card">
+          <svg class="w-6 h-6 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
           <div>
             <strong>Soporte cercano</strong>
             <div class="text-sm text-muted-700">Acompañamos antes y después de la compra.</div>
@@ -489,14 +619,8 @@
   <section id="categorias" class="section py-16">
     <div class="site-container">
       <h2 class="section-title text-2xl font-bold mb-6">Categorías</h2>
-      <ul class="flex flex-wrap gap-3">
-        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Audio y auriculares</li>
-        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">TV sticks y streaming</li>
-        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Informática & periféricos</li>
-        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Hogar inteligente</li>
-        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Pequeños electrodomésticos</li>
-        <li class="px-3 py-2 rounded-full bg-white border border-gray-100 shadow-sm">Cables, cargadores y accesorios</li>
-      </ul>
+      <!-- Reemplazado: lista dinámica -->
+      <ul id="categories-list" class="flex flex-wrap gap-3"></ul>
       <p class="note text-sm text-muted-700 mt-4">El catálogo se actualiza seguido.</p>
     </div>
   </section>
@@ -506,15 +630,15 @@
     <div class="site-container">
       <h2 class="section-title text-2xl font-bold mb-4">Logística y cobertura</h2>
       <div class="grid md:grid-cols-3 gap-6">
-        <div class="p-4 bg-white rounded-2xl shadow-sm card-hover">
+        <div class="p-4 rounded-2xl shadow-sm value-card">
           <h4 class="font-semibold mb-2">Envíos</h4>
           <p class="text-sm text-muted-700">Correo y transporte; mensajería en AMBA. Costos y tiempos según destino y peso.</p>
         </div>
-        <div class="p-4 bg-white rounded-2xl shadow-sm card-hover">
+        <div class="p-4 rounded-2xl shadow-sm value-card">
           <h4 class="font-semibold mb-2">Pagos</h4>
           <p class="text-sm text-muted-700">Efectivo, transferencia y medios electrónicos. Consultá por promociones.</p>
         </div>
-        <div class="p-4 bg-white rounded-2xl shadow-sm card-hover">
+        <div class="p-4 rounded-2xl shadow-sm value-card">
           <h4 class="font-semibold mb-2">Facturación</h4>
           <p class="text-sm text-muted-700">Emitimos comprobantes según normativa vigente.</p>
         </div>
@@ -649,6 +773,18 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
         mobileBtn.addEventListener('click', ()=> mobileBtn.classList.toggle('open'));
       }
     })();
+
+    // Add a scroll listener to the header for a dynamic shadow
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('main-header');
+      if (header) {
+        if (window.scrollY > 50) { // Adjust scroll threshold as needed
+          header.classList.add('scrolled');
+        } else {
+          header.classList.remove('scrolled');
+        }
+      }
+    });
   </script>
 
   <script>
@@ -705,22 +841,22 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
 
       // function to initialize cards present in DOM now (and future ones if you call again)
       function observeCards(root = document) {
-        const cards = Array.from(root.querySelectorAll('.card-polish'));
+        const cards = Array.from(root.querySelectorAll('.card-polish, .card-modern, .value-card')); // Incluir las nuevas clases
         cards.forEach(card => {
           // ensure initial reveal state
           if (!card.classList.contains('reveal-init') && !card.classList.contains('in-view')) {
             card.classList.add('reveal-init');
           }
-          // ensure shimmer element exists
-          if (!card.querySelector('.shimmer')) {
+          // ensure shimmer element exists for card-polish (optional for other types)
+          if (card.classList.contains('card-polish') && !card.querySelector('.shimmer')) {
             const sh = document.createElement('div');
             sh.className = 'shimmer';
             card.appendChild(sh);
           }
           // observe for reveal
           if (window.cardRevealObserver) window.cardRevealObserver.observe(card);
-          // attach tilt if not attached and on wide screens
-          if (!card.dataset.tiltAttached && window.innerWidth > 768) {
+          // attach tilt if not attached and on wide screens (only for card-polish for now)
+          if (card.classList.contains('card-polish') && !card.dataset.tiltAttached && window.innerWidth > 768) {
             card.classList.add('tilt');
             attachTilt(card);
           }
@@ -745,10 +881,10 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
           mutations.forEach(m => {
             if (m.addedNodes && m.addedNodes.length) {
               m.addedNodes.forEach(n => {
-                if (n.nodeType === 1 && n.matches && n.matches('.card-polish')) added = true;
+                if (n.nodeType === 1 && n.matches && (n.matches('.card-polish') || n.matches('.card-modern') || n.matches('.value-card'))) added = true;
                 if (n.nodeType === 1) {
                   // also check descendants
-                  if (n.querySelector && n.querySelector('.card-polish')) added = true;
+                  if (n.querySelector && (n.querySelector('.card-polish') || n.querySelector('.card-modern') || n.querySelector('.value-card'))) added = true;
                 }
               });
             }
@@ -762,5 +898,310 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
     })();
   </script>
 
+  <div id="mobile-nav" aria-hidden="true">
+    <button class="mn-overlay" data-close="1" aria-label="Cerrar menú"></button>
+    <nav class="mn-panel" role="dialog" aria-modal="true" aria-label="Menú móvil">
+      <div class="flex items-center justify-between mb-1">
+        <span class="font-semibold text-lg">Menú</span>
+        <button id="mobile-menu-close" class="p-2 rounded-md hover:bg-gray-100" aria-label="Cerrar">
+          <svg width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M6 18L18 6"/>
+          </svg>
+        </button>
+      </div>
+
+      <div>
+        <h6>Navegación</h6>
+        <a href="#quienes-somos" data-link>Quiénes somos</a>
+        <a href="#propuesta-valor" data-link>Propuesta</a>
+        <a href="/catalogo.html" data-link>Catálogo</a>
+        <a href="#contacto" data-link>Contacto</a>
+        <a href="contact.html" data-link>Contacto (página)</a>
+      </div>
+
+      <div>
+        <h6>Categorías</h6>
+        <ul id="mobile-cats" class="space-y-1"></ul>
+      </div>
+
+      <div class="mt-2">
+        <h6>Acción</h6>
+        <a href="https://wa.me/5491159914197" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    (function mobileMenu(){
+      const btn = document.getElementById('mobile-menu-button');
+      const panelWrap = document.getElementById('mobile-nav');
+      const closeBtn = document.getElementById('mobile-menu-close');
+      let lastFocused = null;
+
+      if(!btn || !panelWrap) return;
+
+      // syncCategories eliminado: ahora las categorías se inyectan en vivo desde Firestore
+
+      function trapFocus(e){
+        if(e.key !== 'Tab') return;
+        const focusables = panelWrap.querySelectorAll('a,button,[tabindex]:not([tabindex="-1"])');
+        if(!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length-1];
+        if(e.shiftKey && document.activeElement === first){
+          e.preventDefault(); last.focus();
+        } else if(!e.shiftKey && document.activeElement === last){
+          e.preventDefault(); first.focus();
+        }
+      }
+
+      function open(){
+        lastFocused = document.activeElement;
+        btn.classList.add('open');
+        btn.setAttribute('aria-expanded','true');
+        panelWrap.dataset.state = 'opening';
+        panelWrap.removeAttribute('aria-hidden');
+        requestAnimationFrame(()=> {
+          panelWrap.dataset.state = 'open';
+          const firstLink = panelWrap.querySelector('a,button');
+          if(firstLink) firstLink.focus();
+        });
+        document.addEventListener('keydown', escHandler);
+        document.addEventListener('keydown', trapFocus, true);
+        disableScroll();
+      }
+
+      function close(){
+        btn.classList.remove('open');
+        btn.setAttribute('aria-expanded','false');
+        panelWrap.dataset.state = 'closing';
+        panelWrap.setAttribute('aria-hidden','true');
+        setTimeout(()=>{
+          if(panelWrap.dataset.state === 'closing'){
+            delete panelWrap.dataset.state;
+            panelWrap.style.display = '';
+          }
+        }, 380);
+        document.removeEventListener('keydown', escHandler);
+        document.removeEventListener('keydown', trapFocus, true);
+        enableScroll();
+        if(lastFocused) lastFocused.focus();
+      }
+
+      function escHandler(e){
+        if(e.key === 'Escape') close();
+      }
+
+      function toggle(){
+        const openNow = panelWrap.dataset.state === 'open' || panelWrap.dataset.state === 'opening';
+        openNow ? close() : open();
+      }
+
+      btn.addEventListener('click', toggle);
+      closeBtn && closeBtn.addEventListener('click', close);
+      panelWrap.addEventListener('click', e=>{
+        if(e.target.dataset.close) close();
+        if(e.target.matches('[data-link]')) close();
+      });
+
+      window.addEventListener('resize', ()=>{
+        if(window.innerWidth >= 768){
+          if(panelWrap.dataset.state === 'open') close();
+        }
+      });
+
+      let scrollY = 0;
+      function disableScroll(){
+        scrollY = window.scrollY;
+        document.body.style.position='fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.left='0'; document.body.style.right='0';
+        document.body.style.width='100%';
+      }
+      function enableScroll(){
+        document.body.style.position='';
+        document.body.style.top='';
+        document.body.style.left=''; document.body.style.right='';
+        document.body.style.width='';
+        window.scrollTo(0, scrollY);
+      }
+    })();
+  </script>
+
+  <!-- Carga dinámica de categorías (Firestore) -->
+  <script type="module">
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { firebaseConfig } from "./firebaseconfig.js";
+
+    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
+
+    const listEl = document.getElementById('categories-list');
+    const mobileEl = document.getElementById('mobile-cats');
+
+    function slugify(str=''){
+      return encodeURIComponent(
+        String(str)
+          .trim()
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+          .replace(/[^a-z0-9]+/g,'-')
+          .replace(/^-+|-+$/g,'')
+      );
+    }
+
+    function renderCategories(docs){
+      if(!Array.isArray(docs)) return;
+      window.__lastCategoriesDocs = docs;
+
+      if(listEl) listEl.innerHTML = '';
+      if(mobileEl) mobileEl.innerHTML = '';
+
+      const fragDesktop = document.createDocumentFragment();
+      const fragMobile  = document.createDocumentFragment();
+
+      if(!docs.length){
+        if(listEl){
+          const li = document.createElement('li');
+          li.className = 'px-3 py-2 rounded-full category-tag opacity-70';
+          li.textContent = 'Sin categorías';
+          fragDesktop.appendChild(li);
+        }
+      } else {
+        docs.forEach(d => {
+          const data = d.data?.() || {};
+          const name = data.name || data.nombre || 'Categoría';
+          const slug = data.slug ? encodeURIComponent(data.slug) : slugify(name);
+          const icon = data.icon || data.iconUrl;
+
+          if(listEl){
+            const li = document.createElement('li');
+            li.className = 'px-3 py-2 rounded-full category-tag';
+            li.innerHTML = `<a href="catalogo.html?category=${slug}" class="flex items-center gap-1">
+                ${icon ? `<img src="${icon}" alt="" class="w-4 h-4 object-contain">` : ''}
+                <span>${name}</span>
+              </a>`;
+            fragDesktop.appendChild(li);
+          }
+
+          if(mobileEl){
+            const liM = document.createElement('li');
+            liM.innerHTML = `<a href="catalogo.html?category=${slug}" data-link class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm">
+                ${icon ? `<img src="${icon}" alt="" class="w-4 h-4 object-contain">` : ''}
+                <span>${name}</span>
+              </a>`;
+            fragMobile.appendChild(liM);
+          }
+        });
+      }
+
+      if(listEl) listEl.appendChild(fragDesktop);
+      if(mobileEl) mobileEl.appendChild(fragMobile);
+    }
+
+    (function ensureMobileCatsSync(){
+      const mobileNav = document.getElementById('mobile-nav');
+      if(!mobileNav) return;
+      const obs = new MutationObserver(muts=>{
+        for(const m of muts){
+          if(m.type === 'attributes' && m.attributeName === 'data-state'){
+            const state = mobileNav.getAttribute('data-state');
+            if(state === 'open' || state === 'opening'){
+              if(mobileEl && mobileEl.children.length === 0){
+                if(Array.isArray(window.__lastCategoriesDocs)){
+                  renderCategories(window.__lastCategoriesDocs);
+                } else if(listEl && listEl.children.length){
+                  const frag = document.createDocumentFragment();
+                  Array.from(listEl.children).forEach(li=>{
+                    const clone = li.cloneNode(true);
+                    const a = clone.querySelector('a');
+                    if(a){
+                      a.className = 'flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm';
+                      a.setAttribute('data-link','');
+                    }
+                    frag.appendChild(clone);
+                  });
+                  mobileEl.appendChild(frag);
+                }
+              }
+            }
+          }
+        }
+      });
+      obs.observe(mobileNav, { attributes:true, attributeFilter:['data-state'] });
+    })();
+
+    // Hidratación inmediata al abrir la hamburguesa
+    (function forceHydrateOnOpen(){
+      const btn = document.getElementById('mobile-menu-button');
+      const mobileCats = document.getElementById('mobile-cats');
+      const desktopList = document.getElementById('categories-list');
+      if (!btn || !mobileCats) return;
+
+      function hydrateNow(){
+        if (Array.isArray(window.__lastCategoriesDocs) && mobileCats.children.length === 0){
+          renderCategories(window.__lastCategoriesDocs);
+          return;
+        }
+        if (mobileCats.children.length === 0 && desktopList && desktopList.children.length){
+          const frag = document.createDocumentFragment();
+          Array.from(desktopList.children).forEach(li=>{
+            const clone = li.cloneNode(true);
+            const a = clone.querySelector('a');
+            if(a){
+              a.className = 'flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm';
+              a.setAttribute('data-link','');
+            }
+            frag.appendChild(clone);
+          });
+          mobileCats.appendChild(frag);
+        }
+      }
+      btn.addEventListener('click', () => setTimeout(hydrateNow, 60));
+    })();
+
+    try {
+      const colRef = collection(db, "categorias");
+      const qRef = query(
+        colRef,
+        where('active','==', true),
+        orderBy('order','asc')
+      );
+
+      onSnapshot(qRef, snapshot => {
+        renderCategories(snapshot.docs);
+      }, err => {
+        if (err.code === 'failed-precondition') {
+          console.error('Firestore: falta crear índice compuesto (categories: active ASC, order ASC)');
+          const urlMatch = err.message && err.message.match(/https:\/\/console\.firebase\.google\.com[^\s"]+/);
+          if (urlMatch) console.error('Crear índice en consola:', urlMatch[0]);
+        } else {
+          console.error('Error cargando categorías:', err);
+        }
+        if(listEl){
+          listEl.innerHTML = '<li class="px-3 py-2 rounded-full category-tag bg-red-600/20 text-red-200">Error</li>';
+        }
+      });
+    } catch(e){
+      console.error('Fallo inicializando categorías dinámicas', e);
+      if(listEl){
+        listEl.innerHTML = '<li class="px-3 py-2 rounded-full category-tag bg-red-600/20 text-red-200">Error</li>';
+      }
+    }
+  </script>
+
+  <!-- catalogo.html (agregá esto antes de filtrar productos por categoría, por ejemplo antes de loadProductsByCategory)
+const urlParams = new URLSearchParams(window.location.search);
+const category = urlParams.get('category') || urlParams.get('cat'); // retrocompatibilidad
+
+// Luego usá la constante category para filtrar productos por su slug
+// Ejemplo de uso:
+if (category) {
+  // filtrar productos por slug === category
+  loadProductsByCategory(category);
+} else {
+-->
 </body>
 </html>
