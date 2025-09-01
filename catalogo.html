@@ -75,7 +75,7 @@
           transform-origin: center;
         }
         .logo-big {
-          width: 96px; /* Ancho consistente */
+          width: 200px; /* Ancho consistente */
           height: auto;
           transition: transform .6s cubic-bezier(.2,.9,.2,1), filter .6s;
           filter: drop-shadow(0 18px 40px rgba(99,102,241,.12));
@@ -415,7 +415,7 @@
     <header id="main-header" class="sticky top-0 z-50 bg-white/80 backdrop-blur glass border-b border-gray-100">
         <div class="container mx-auto px-4 h-20 flex items-center justify-between transition-all duration-300">
             <a class="flex items-center gap-4 logo-wrap" href="index.html">
-                <img class="logo-big" src="https://i.postimg.cc/GtWS4w0z/Captura-de-pantalla-2025-08-21-134638.png" alt="Ensintonía logo" loading="lazy" decoding="async">
+                <img class="logo-big" src="https://i.postimg.cc/YSDhn3jJ/Chat-GPT-Image-31-ago-2025-03-26-38-p-m.png" alt="Ensintonía logo" loading="lazy" decoding="async">
                 <div>
                   <div class="neon-text-logo text-2xl leading-tight" id="logo-text">Ensintonía</div>
                   <div class="text-sm muted -mt-1">Importadora directa • Electrónica & Hogar</div>
@@ -706,5 +706,23 @@
         <p class="text-sm text-futuristic-mute mt-1">Un segundo, por favor</p>
       </div>
     </div>
+
+    <!-- Ejemplo dentro de tu loop de categorías -->
+    <section class="categoria-bloque" id="cat-${slug}">
+      <h2 class="text-xl font-bold mb-4" id="cat-${slug}-title">${nombreCategoria}</h2>
+      <!-- productos ... -->
+    </section>
+
+    <script type="module">
+      // ...existing code de carga/render productos...
+        setTimeout(()=>{
+          if(location.hash.length > 1){
+            const el = document.getElementById(location.hash.slice(1));
+            if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+          }
+        },60);
+    </script>
 </body>
 </html>
+
+
