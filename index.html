@@ -71,11 +71,11 @@
     .logo-wrap {
       display:flex;
       align-items:center;
-      gap:.9rem;
+      gap:.15rem;
       transform-origin:center;
     }
     .logo-big {
-      width:96px;
+      width: 190px;
       height:auto;
       transition: transform .6s cubic-bezier(.2,.9,.2,1), filter .6s;
       filter: drop-shadow(0 18px 40px rgba(99,102,241,.12));
@@ -472,7 +472,7 @@
   <header id="main-header" class="sticky top-0 z-50 bg-white/80 backdrop-blur glass border-b border-gray-100">
     <div class="site-container flex items-center justify-between h-24">
       <a class="flex items-center gap-4 logo-wrap" href="#">
-        <img class="logo-big" src="https://i.postimg.cc/GtWS4w0z/Captura-de-pantalla-2025-08-21-134638.png" alt="Ensintonía logo" loading="lazy" decoding="async">
+        <img class="logo-big" src="https://i.postimg.cc/YSDhn3jJ/Chat-GPT-Image-31-ago-2025-03-26-38-p-m.png" alt="Ensintonía logo" loading="lazy" decoding="async">
         <div>
           <div class="neon-text hero-title-shadow text-2xl leading-tight">Ensintonía</div>
           <div class="text-sm muted -mt-1">Importadora directa • Electrónica & Hogar</div>
@@ -619,6 +619,21 @@
   <section id="categorias" class="section py-16">
     <div class="site-container">
       <h2 class="section-title text-2xl font-bold mb-6">Categorías</h2>
+
+      <!-- NUEVO: Selector rápido para ir directo a una categoría -->
+      <div class="mb-5 flex flex-wrap items-center gap-3" id="category-jump-wrap">
+        <label for="category-jump" class="text-sm font-medium">Ir directo:</label>
+        <select id="category-jump"
+                class="text-sm bg-white/10 border border-white/20 rounded-lg px-3 py-2
+                       focus:outline-none focus:ring-2 focus:ring-brand-300 min-w-[230px]">
+          <option value="">Seleccioná una categoría…</option>
+        </select>
+        <button id="category-jump-clear"
+                class="text-xs px-3 py-2 rounded-lg border border-white/20 text-ink hover:bg-white/10 transition"
+                type="button" hidden>Limpiar</button>
+      </div>
+      <!-- FIN NUEVO -->
+
       <!-- Reemplazado: lista dinámica -->
       <ul id="categories-list" class="flex flex-wrap gap-3"></ul>
       <p class="note text-sm text-muted-700 mt-4">El catálogo se actualiza seguido.</p>
@@ -1030,166 +1045,178 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
 
   <!-- Carga dinámica de categorías (Firestore) -->
   <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { firebaseConfig } from "./firebaseconfig.js";
+    console.log('BUILD ID:', '2025-08-31_15:40');
 
-    const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { db as importedDb, auth as importedAuth, firebaseConfig as importedFirebaseConfig } from './firebaseconfig.js';
+
+    console.log('[CATS] init block (home)');
+
+    const app  = initializeApp(importedFirebaseConfig);
+    const db   = importedDb || getFirestore(app);
+    const auth = importedAuth || getAuth(app);
     const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'default-app-id';
 
-    const listEl = document.getElementById('categories-list');
-    const mobileEl = document.getElementById('mobile-cats');
+    const $home   = document.getElementById('categories-list');   // chips en portada
+    const $mobile = document.getElementById('mobile-cats');       // menú hamburguesa
+    const $select = document.getElementById('category-jump');     // "Ir directo"
+    const $clear  = document.getElementById('category-jump-clear');
 
-    function slugify(str=''){
-      return encodeURIComponent(
-        String(str)
-          .trim()
-          .toLowerCase()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-          .replace(/[^a-z0-9]+/g,'-')
-          .replace(/^-+|-+$/g,'')
-      );
+    // REEMPLAZO slugify previo por la versión solicitada
+    function slugify(s=''){
+      return String(s)
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')   // quitar tildes
+        .toLowerCase().trim()
+        .replace(/[^\w\s-]/g,'')                          // quitar símbolos raros
+        .replace(/\s+/g,'-')                              // espacios -> guion
+        .replace(/-+/g,'-');                              // colapsar guiones
     }
 
-    function renderCategories(docs){
-      if(!Array.isArray(docs)) return;
-      window.__lastCategoriesDocs = docs;
+    function render(categories){
+      console.log('[CATS] render count:', categories.length);
+      if ($home)   $home.innerHTML = '';
+      if ($mobile) $mobile.innerHTML = '';
+      if ($select) $select.innerHTML = '<option value="">Seleccioná una categoría…</option>';
 
-      if(listEl) listEl.innerHTML = '';
-      if(mobileEl) mobileEl.innerHTML = '';
+      if (!categories.length){
+        if ($home) $home.innerHTML = '<li class="px-3 py-2 rounded-full category-tag opacity-70">Sin categorías</li>';
+        if ($clear) $clear.hidden = true;
+        return;
+      }
 
-      const fragDesktop = document.createDocumentFragment();
-      const fragMobile  = document.createDocumentFragment();
+      const fragHome = document.createDocumentFragment();
+      const fragMob  = document.createDocumentFragment();
 
-      if(!docs.length){
-        if(listEl){
+      categories.forEach(c=>{
+        const name = c.name || c.nombre || 'Categoría';
+        const slug = c.slug ? String(c.slug) : slugify(name);
+        const icon = c.icon || c.iconUrl;
+
+        if ($home){
           const li = document.createElement('li');
-          li.className = 'px-3 py-2 rounded-full category-tag opacity-70';
-          li.textContent = 'Sin categorías';
-          fragDesktop.appendChild(li);
+          li.className = 'px-3 py-2 rounded-full category-tag';
+          li.innerHTML = `<a href="catalogo.html?category=${slug}#cat-${slug}" class="flex items-center gap-1" data-cat="${slug}">
+            ${icon ? `<img src="${icon}" class="w-4 h-4 object-contain" alt="">` : ''}
+            <span>${name}</span>
+          </a>`;
+          fragHome.appendChild(li);
         }
-      } else {
-        docs.forEach(d => {
-          const data = d.data?.() || {};
-          const name = data.name || data.nombre || 'Categoría';
-          const slug = data.slug ? encodeURIComponent(data.slug) : slugify(name);
-          const icon = data.icon || data.iconUrl;
 
-          if(listEl){
-            const li = document.createElement('li');
-            li.className = 'px-3 py-2 rounded-full category-tag';
-            li.innerHTML = `<a href="catalogo.html?category=${slug}" class="flex items-center gap-1">
-                ${icon ? `<img src="${icon}" alt="" class="w-4 h-4 object-contain">` : ''}
-                <span>${name}</span>
-              </a>`;
-            fragDesktop.appendChild(li);
-          }
+        if ($mobile){
+          const liM = document.createElement('li');
+          liM.innerHTML = `<a data-cat="${slug}" href="catalogo.html?category=${slug}#cat-${slug}"
+              class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm">
+              ${icon ? `<img src="${icon}" class="w-4 h-4 object-contain" alt="">` : ''}
+              <span>${name}</span>
+          </a>`;
+          fragMob.appendChild(liM);
+        }
 
-          if(mobileEl){
-            const liM = document.createElement('li');
-            liM.innerHTML = `<a href="catalogo.html?category=${slug}" data-link class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm">
-                ${icon ? `<img src="${icon}" alt="" class="w-4 h-4 object-contain">` : ''}
-                <span>${name}</span>
-              </a>`;
-            fragMobile.appendChild(liM);
+        if ($select){
+          const opt = document.createElement('option');
+          opt.value = slug;
+          opt.textContent = name;
+          $select.appendChild(opt);
+        }
+      });
+
+      if ($home)   $home.appendChild(fragHome);
+      if ($mobile) $mobile.appendChild(fragMob);
+
+      if ($clear){
+        $clear.hidden = !$select || !$select.value;
+      }
+    }
+
+    // Delegación click móvil para cerrar y navegar
+    (function wireMobileNav(){
+      if (!$mobile) return;
+      $mobile.addEventListener('click', e=>{
+        const a = e.target.closest('a[data-cat]');
+        if(!a) return;
+        console.log('[CATS] mobile nav ->', a.dataset.cat);
+        // cerrar usando overlay existente para mantener animaciones
+        const overlay = document.querySelector('#mobile-nav .mn-overlay');
+        if (overlay) overlay.click();
+        // navegación natural
+      });
+    })();
+
+    // Select jump + clear
+    if ($select){
+      $select.addEventListener('change', ()=>{
+        if ($select.value){
+          if ($clear) $clear.hidden = false;
+          window.location.href = `catalogo.html?category=${$select.value}`;
+        } else {
+          if ($clear) $clear.hidden = true;
+        }
+      });
+    }
+    if ($clear){
+      $clear.addEventListener('click', ()=>{
+        if ($select){
+          $select.value = '';
+          $clear.hidden = true;
+        }
+      });
+    }
+
+    // Auth + snapshot
+    signInAnonymously(auth).catch(err=>{
+      console.warn('[CATS] anon sign-in failed (continuing read-only)', err?.code);
+    });
+
+    onAuthStateChanged(auth, ()=>{
+      console.log('[CATS] auth ready, subscribing');
+      const colRef = collection(db, `artifacts/${appId}/public/data/categories`);
+      onSnapshot(colRef, (snap)=>{
+        const rows = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        const act = rows.filter(x => x.active === true || x.active === 'true' || x.active === 1);
+        render(act.length ? act : rows);
+      }, err=>{
+        console.error('[CATS] snapshot error', err);
+        render([]);
+      });
+    });
+
+    // --- fuerza href correcto en todos los links de categorías (home + hamburguesa) ---
+    function fixCategoryLinks(){
+      const roots = [
+        document.getElementById('categories-list'),
+        document.getElementById('mobile-cats')
+      ];
+      roots.forEach(root=>{
+        if(!root) return;
+        root.querySelectorAll('a').forEach(a=>{
+          const slug = (a.dataset.cat && a.dataset.cat.trim()) || slugify(a.textContent || '');
+          if(!slug) return;
+          const want = `catalogo.html?category=${slug}#cat-${slug}`;
+          a.setAttribute('href', want);
+          a.dataset.cat = slug;
+          if(!a.__catPatched){
+            a.addEventListener('click', e=>{
+              const current = a.getAttribute('href') || '';
+              if(!current.includes('?category=')){ 
+                e.preventDefault();
+                location.href = want;
+              }
+            }, { capture:true });
+            a.__catPatched = 1;
           }
         });
-      }
-
-      if(listEl) listEl.appendChild(fragDesktop);
-      if(mobileEl) mobileEl.appendChild(fragMobile);
+      });
     }
 
-    (function ensureMobileCatsSync(){
-      const mobileNav = document.getElementById('mobile-nav');
-      if(!mobileNav) return;
-      const obs = new MutationObserver(muts=>{
-        for(const m of muts){
-          if(m.type === 'attributes' && m.attributeName === 'data-state'){
-            const state = mobileNav.getAttribute('data-state');
-            if(state === 'open' || state === 'opening'){
-              if(mobileEl && mobileEl.children.length === 0){
-                if(Array.isArray(window.__lastCategoriesDocs)){
-                  renderCategories(window.__lastCategoriesDocs);
-                } else if(listEl && listEl.children.length){
-                  const frag = document.createDocumentFragment();
-                  Array.from(listEl.children).forEach(li=>{
-                    const clone = li.cloneNode(true);
-                    const a = clone.querySelector('a');
-                    if(a){
-                      a.className = 'flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm';
-                      a.setAttribute('data-link','');
-                    }
-                    frag.appendChild(clone);
-                  });
-                  mobileEl.appendChild(frag);
-                }
-              }
-            }
-          }
-        }
-      });
-      obs.observe(mobileNav, { attributes:true, attributeFilter:['data-state'] });
-    })();
+    // ejecutar ahora
+    fixCategoryLinks();
 
-    // Hidratación inmediata al abrir la hamburguesa
-    (function forceHydrateOnOpen(){
-      const btn = document.getElementById('mobile-menu-button');
-      const mobileCats = document.getElementById('mobile-cats');
-      const desktopList = document.getElementById('categories-list');
-      if (!btn || !mobileCats) return;
+    // observar cambios para re-fijar (re-renders / snapshots)
+    new MutationObserver(()=>fixCategoryLinks())
+      .observe(document.body, { subtree:true, childList:true });
 
-      function hydrateNow(){
-        if (Array.isArray(window.__lastCategoriesDocs) && mobileCats.children.length === 0){
-          renderCategories(window.__lastCategoriesDocs);
-          return;
-        }
-        if (mobileCats.children.length === 0 && desktopList && desktopList.children.length){
-          const frag = document.createDocumentFragment();
-          Array.from(desktopList.children).forEach(li=>{
-            const clone = li.cloneNode(true);
-            const a = clone.querySelector('a');
-            if(a){
-              a.className = 'flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm';
-              a.setAttribute('data-link','');
-            }
-            frag.appendChild(clone);
-          });
-          mobileCats.appendChild(frag);
-        }
-      }
-      btn.addEventListener('click', () => setTimeout(hydrateNow, 60));
-    })();
-
-    try {
-      const colRef = collection(db, "categorias");
-      const qRef = query(
-        colRef,
-        where('active','==', true),
-        orderBy('order','asc')
-      );
-
-      onSnapshot(qRef, snapshot => {
-        renderCategories(snapshot.docs);
-      }, err => {
-        if (err.code === 'failed-precondition') {
-          console.error('Firestore: falta crear índice compuesto (categories: active ASC, order ASC)');
-          const urlMatch = err.message && err.message.match(/https:\/\/console\.firebase\.google\.com[^\s"]+/);
-          if (urlMatch) console.error('Crear índice en consola:', urlMatch[0]);
-        } else {
-          console.error('Error cargando categorías:', err);
-        }
-        if(listEl){
-          listEl.innerHTML = '<li class="px-3 py-2 rounded-full category-tag bg-red-600/20 text-red-200">Error</li>';
-        }
-      });
-    } catch(e){
-      console.error('Fallo inicializando categorías dinámicas', e);
-      if(listEl){
-        listEl.innerHTML = '<li class="px-3 py-2 rounded-full category-tag bg-red-600/20 text-red-200">Error</li>';
-      }
-    }
   </script>
 
   <!-- catalogo.html (agregá esto antes de filtrar productos por categoría, por ejemplo antes de loadProductsByCategory)
