@@ -130,6 +130,13 @@
             color: var(--futuristic-ink); /* Texto claro para contraste */
             border-radius: 1rem; /* rounded-2xl de Tailwind */
         }
+        /* Forzar color de texto dentro de las tarjetas */
+        .product-card h3, .product-card .text-gray-900, .product-card .text-gray-800 {
+            color: var(--futuristic-ink) !important;
+        }
+        .product-card p, .product-card .text-gray-700, .product-card .text-gray-600 {
+            color: var(--futuristic-mute) !important;
+        }
         .product-card:hover {
             transform: translateY(-8px) scale(1.02); /* Efecto más pronunciado al pasar el ratón */
             box-shadow: 0 18px 40px rgba(0,0,0,0.35); /* Sombra más grande y profunda */
@@ -143,7 +150,7 @@
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle at center, rgba(110,231,183,0.08) 0%, transparent 70%); /* Brillo menta */
+            background: radial-gradient(circle at center, rgba(110, 231, 183, 0.08) 0%, transparent 70%); /* Brillo menta */
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
             pointer-events: none;
@@ -373,30 +380,32 @@
           background: rgba(110, 231, 183, 0.1);
         }
 
-        /* Mejoras en el modal de detalle de producto */
+        /* --- Mejoras en el modal de detalle de producto (forzar tema oscuro) --- */
         #pd-overlay .md\:bg-white { /* el modal en sí */
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%) !important;
-            color: var(--futuristic-ink);
-            border: 1px solid rgba(49, 62, 85, 0.6);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(20, 31, 49, 0.95) 100%) !important;
+            color: var(--futuristic-ink) !important;
+            border: 1px solid rgba(49, 62, 85, 0.6) !important;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6) !important;
         }
-        #pd-overlay .border-b { border-color: rgba(49, 62, 85, 0.6); }
-        #pd-overlay .text-gray-900 { color: var(--futuristic-ink); } /* Títulos principales */
-        #pd-overlay .text-gray-700 { color: var(--futuristic-mute); } /* Párrafos y descripciones */
-        #pd-overlay .text-gray-500 { color: var(--muted); } /* Texto de ID/Stock */
-        #pd-overlay #pd-close { color: var(--futuristic-mute); }
-        #pd-overlay #pd-close:hover { background: rgba(255,255,255,0.08); }
-        #pd-overlay .pd-tab { color: var(--futuristic-mute); }
+        #pd-overlay .border-b { border-color: rgba(49, 62, 85, 0.6) !important; }
+        #pd-overlay .text-gray-900, #pd-overlay .text-xl, #pd-overlay .text-2xl { color: var(--futuristic-ink) !important; } /* Títulos principales */
+        #pd-overlay .text-gray-700, #pd-overlay .text-base, #pd-overlay .leading-6 { color: var(--futuristic-mute) !important; } /* Párrafos y descripciones */
+        #pd-overlay .text-gray-500, #pd-overlay .text-xs { color: var(--muted) !important; } /* Texto de ID/Stock */
+        #pd-overlay #pd-close { color: var(--futuristic-mute) !important; }
+        #pd-overlay #pd-close:hover { background: rgba(255,255,255,0.08) !important; }
+        #pd-overlay .pd-tab { color: var(--futuristic-mute) !important; }
         #pd-overlay .pd-tab[data-active="true"] {
-            color: var(--brand-1); /* Mint para tab activa */
-            border-bottom: 2px solid var(--brand-1);
+            color: var(--brand-1) !important; /* Mint para tab activa */
+            border-bottom: 2px solid var(--brand-1) !important;
         }
         #pd-overlay .bg-green-600 { background-color: #25D366 !important; } /* WhatsApp button */
-        #pd-overlay .border { border-color: rgba(49, 62, 85, 0.6); color: var(--futuristic-ink); background: rgba(255,255,255,0.05); }
-        #pd-overlay .border:hover { background: rgba(255,255,255,0.1); border-color: var(--brand-1); }
-        #pd-overlay .bg-gray-50 { background-color: rgba(255,255,255,0.05); } /* Fondo de imagen */
-        #pd-overlay #pd-thumbs button { border-color: rgba(49, 62, 85, 0.6); background: rgba(255,255,255,0.05); }
-        #pd-overlay #pd-thumbs button:hover { border-color: var(--brand-1); }
+        #pd-overlay .border { border-color: rgba(49, 62, 85, 0.6) !important; color: var(--futuristic-ink) !important; background: rgba(255,255,255,0.05) !important; }
+        #pd-overlay .border:hover { background: rgba(255,255,255,0.1) !important; border-color: var(--brand-1) !important; }
+        #pd-overlay .bg-gray-50, #pd-overlay .bg-gray-100 { background-color: rgba(255,255,255,0.05) !important; } /* Fondo de imagen */
+        #pd-overlay #pd-thumbs button { border-color: rgba(49, 62, 85, 0.6) !important; background: rgba(255,255,255,0.05) !important; }
+        #pd-overlay #pd-thumbs button:hover, #pd-overlay #pd-thumbs button[data-active="true"] { border-color: var(--brand-1) !important; }
+        #pd-overlay .border-t { border-color: rgba(49, 62, 85, 0.6) !important; }
+        /* --- Fin mejoras modal --- */
 
         /* Loader para los esqueletos */
         @keyframes pulse-bg {
@@ -407,6 +416,136 @@
           animation: pulse-bg 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
           background-color: rgba(49, 62, 85, 0.2) !important; /* Base color for skeleton */
         }
+
+        /* --- Product Detail Modal Futuristic Theme Override (append) --- */
+        #pd-overlay .md\:bg-white,
+        #pd-overlay .bg-white {
+          background: linear-gradient(135deg, rgba(15,23,42,.97) 0%, rgba(13,32,63,.94) 55%, rgba(20,41,79,.92) 100%) !important;
+          color: var(--futuristic-ink) !important;
+          border: 1px solid rgba(49,62,85,.6) !important;
+          box-shadow: 0 24px 60px -8px rgba(0,0,0,.55) !important;
+        }
+
+        #pd-overlay h1,#pd-overlay h2,#pd-overlay h3,#pd-overlay h4,#pd-overlay h5,#pd-overlay h6,
+        #pd-overlay .text-gray-900,#pd-overlay .text-gray-800,#pd-overlay .font-semibold,#pd-overlay .font-bold {
+          color: var(--futuristic-ink) !important;
+        }
+
+        #pd-overlay p,
+        #pd-overlay li,
+        #pd-overlay .text-gray-700,
+        #pd-overlay .text-gray-600,
+        #pd-overlay .leading-6,
+        #pd-overlay .text-base {
+          color: var(--futuristic-mute) !important;
+        }
+
+        #pd-overlay .text-gray-500,
+        #pd-overlay .text-xs,
+        #pd-overlay small {
+          color: var(--muted) !important;
+        }
+
+        #pd-overlay .border,
+        #pd-overlay .border-b,
+        #pd-overlay .border-t,
+        #pd-overlay .border-l,
+        #pd-overlay .border-r,
+        #pd-overlay .border-gray-200,
+        #pd-overlay .border-gray-300 {
+          border-color: rgba(49,62,85,.55) !important;
+        }
+
+        #pd-overlay .bg-gray-50,
+        #pd-overlay .bg-gray-100,
+        #pd-overlay .bg-gray-200 {
+          background: rgba(255,255,255,0.04) !important;
+        }
+
+        #pd-overlay .pd-tab {
+          color: var(--futuristic-mute) !important;
+          background: transparent !important;
+          border-bottom: 2px solid transparent !important;
+          transition: color .25s, border-color .25s;
+        }
+        #pd-overlay .pd-tab[data-active="true"] {
+          color: var(--brand-1) !important;
+          border-bottom-color: var(--brand-1) !important;
+        }
+
+        #pd-overlay #pd-thumbs button {
+          background: rgba(255,255,255,0.05) !important;
+          border: 1px solid rgba(49,62,85,.6) !important;
+          transition: border-color .25s, background .25s;
+        }
+        #pd-overlay #pd-thumbs button:hover,
+        #pd-overlay #pd-thumbs button[data-active="true"] {
+          border-color: var(--brand-1) !important;
+          box-shadow: 0 0 0 1px var(--brand-1) inset !important;
+        }
+
+        #pd-overlay #pd-close {
+          color: var(--futuristic-mute) !important;
+          transition: background .25s, color .25s;
+        }
+        #pd-overlay #pd-close:hover {
+          background: rgba(255,255,255,0.08) !important;
+          color: var(--futuristic-ink) !important;
+        }
+
+        #pd-overlay #pd-add {
+          background: rgba(255,255,255,0.06) !important;
+          color: var(--futuristic-ink) !important;
+          border: 1px solid rgba(110,231,183,0.25) !important;
+          transition: background .3s, border-color .3s, transform .3s;
+        }
+        #pd-overlay #pd-add:hover {
+          background: rgba(110,231,183,0.12) !important;
+          border-color: var(--brand-1) !important;
+          transform: translateY(-2px);
+        }
+
+        #pd-overlay #pd-whatsapp {
+          background: linear-gradient(90deg,#25D366,#128C7E) !important;
+          box-shadow: 0 6px 22px -4px rgba(37,211,102,.45) !important;
+          border: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        #pd-overlay #pd-whatsapp:hover {
+          filter: brightness(1.05);
+          box-shadow: 0 10px 28px -6px rgba(37,211,102,.55) !important;
+        }
+
+        #pd-overlay .bg-green-600 { background: linear-gradient(90deg,#25D366,#128C7E) !important; }
+
+        #pd-overlay #pd-badges .bg-green-100,
+        #pd-overlay #pd-badges .bg-blue-100,
+        #pd-overlay #pd-badges .bg-yellow-100,
+        #pd-overlay #pd-badges .bg-red-100 {
+          background: rgba(255,255,255,0.08) !important;
+          border: 1px solid rgba(255,255,255,0.14) !important;
+          color: var(--futuristic-ink) !important;
+        }
+
+        #pd-overlay a, #pd-overlay button { outline: none; }
+        #pd-overlay a:focus-visible,
+        #pd-overlay button:focus-visible {
+          outline: 2px solid var(--brand-1) !important;
+          outline-offset: 2px !important;
+          border-radius: 4px;
+        }
+
+        #pd-overlay .glass,
+        #pd-overlay .backdrop-blur {
+          background: rgba(255,255,255,0.04) !important;
+          backdrop-filter: blur(18px) saturate(140%) !important;
+        }
+
+        #pd-overlay .shadow,
+        #pd-overlay .shadow-lg,
+        #pd-overlay .shadow-xl {
+          box-shadow: 0 18px 48px -12px rgba(0,0,0,.55) !important;
+        }
+        
     </style>
 </head>
 <body class="font-inter text-[15px] lg:text-base antialiased">
@@ -709,7 +848,6 @@
 
     <!-- Ejemplo dentro de tu loop de categorías -->
     <section class="categoria-bloque" id="cat-${slug}">
-      <h2 class="text-xl font-bold mb-4" id="cat-${slug}-title">${nombreCategoria}</h2>
       <!-- productos ... -->
     </section>
 
