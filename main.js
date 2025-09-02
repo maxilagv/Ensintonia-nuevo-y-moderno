@@ -215,29 +215,30 @@ async function loadCategories() {
             const categoryPromises = snapshot.docs.map(async doc => { // Procesar cada categoría asíncronamente
                 const category = { id: doc.id, ...doc.data() };
 
-                // Realizar una sub-consulta para obtener hasta 3 imágenes de productos de esta categoría
-                const productsForCategoryQuery = query(
-                    collection(db, `artifacts/${appId}/public/data/products`),
-                    where("category", "==", category.name),
-                    limit(3) // Revertido a 3 para la animación
+                // Sub-consulta: intentar primero con categoryName, fallback a category
+                const baseCol = collection(db, `artifacts/${appId}/public/data/products`);
+                let productsForCategoryQuery = query(
+                    baseCol,
+                    where("categoryName", "==", category.name),
+                    limit(3)
                 );
-                const productsSnapshot = await getDocs(productsForCategoryQuery);
-                
-                // Recolectar URLs de imágenes de productos, filtrando las nulas/vacías
-                // y asegurándose de no incluir la imagen principal de la categoría si ya está en los productos
+                let productsSnapshot = await getDocs(productsForCategoryQuery);
+
+                if (productsSnapshot.empty) {
+                    productsForCategoryQuery = query(
+                        baseCol,
+                        where("category", "==", category.name),
+                        limit(3)
+                    );
+                    productsSnapshot = await getDocs(productsForCategoryQuery);
+                }
+
                 const productImages = productsSnapshot.docs
                     .map(pDoc => pDoc.data().imageUrl)
                     .filter(url => url && url !== category.imageUrl);
 
-                // Si la categoría tiene una imagen principal, la añadimos al inicio de la lista
-                if (category.imageUrl) {
-                    productImages.unshift(category.imageUrl);
-                }
-                
-                // Asegurarse de que productImages no esté vacío si hay imageUrl de categoría
-                if (productImages.length === 0 && category.imageUrl) {
-                    productImages.push(category.imageUrl);
-                }
+                if (category.imageUrl) productImages.unshift(category.imageUrl);
+                if (productImages.length === 0 && category.imageUrl) productImages.push(category.imageUrl);
 
                 category.productImages = productImages;
                 categoriesData.push(category);
@@ -279,7 +280,7 @@ async function loadCategories() {
                  
                  // Añadir listeners directamente a la tarjeta creada para la animación en PC
                  categoryCardDiv.addEventListener('mouseenter', () => startCategoryImageAnimation(categoryCardDiv));
-                 categoryCardDiv.addEventListener('mouseleave', () => stopCategoryImageAnimation(cardElement));
+                 categoryCardDiv.addEventListener('mouseleave', () => stopCategoryImageAnimation(categoryCardDiv)); // <--- Cambiado aquí
 
                  if (categoriesContainer) {
                     categoriesContainer.appendChild(categoryCardDiv);
@@ -460,13 +461,20 @@ async function loadProductsByCategory(categoryName) {
 
     try {
         const productsColRef = collection(db, `artifacts/${appId}/public/data/products`);
-        // MODIFICADO: Ahora el filtro usa el campo 'category' con el nombre de la categoría
-        const q = query(productsColRef, where("category", "==", categoryName)); 
 
-        // Asignar unsubscribe para poder detener este listener más tarde
-        unsubscribeProducts = onSnapshot(q, (snapshot) => {
+        // Resolución progresiva: primero intenta con categoryName, luego con category
+        let qResolved = query(productsColRef, where("categoryName", "==", categoryName));
+        let testSnap = await getDocs(qResolved);
+        if (testSnap.empty) {
+            console.log("loadProductsByCategory - Sin resultados en categoryName, probando con category legacy.");
+            qResolved = query(productsColRef, where("category", "==", categoryName));
+            testSnap = await getDocs(qResolved);
+        } else {
+            console.log("loadProductsByCategory - Usando campo categoryName para el listener.");
+        }
+
+        unsubscribeProducts = onSnapshot(qResolved, (snapshot) => {
             console.log("loadProductsByCategory - onSnapshot recibido para categoría. Número de productos:", snapshot.size);
-            // productContainer.innerHTML = ''; // Limpia en cada actualización
             productsFullCache = [];
             snapshot.forEach(docSnap=>{
               productsFullCache.push({ id: docSnap.id, ...docSnap.data() });
@@ -476,18 +484,16 @@ async function loadProductsByCategory(categoryName) {
         }, (error) => {
             console.error("loadProductsByCategory - Error al cargar productos por categoría:", error);
             showMessageBox("Error al cargar productos por categoría. Inténtalo más tarde.");
-            hideLoading('products-loading-spinner'); // Oculta el loader de productos incluso si hay un error
-            productsInitialLoadComplete = true; // Marcar productos como cargados incluso con error
-            checkAndHideMainLoader(); // Verificar si el loader principal puede ocultarse
+            hideLoading('products-loading-spinner');
+            productsInitialLoadComplete = true;
+            checkAndHideMainLoader();
         });
     } catch (error) {
         console.error("loadProductsByCategory - Error al configurar listener de productos por categoría:", error);
         showMessageBox("Error al cargar productos por categoría. Inténtalo más tarde.");
-        hideLoading('products-loading-spinner'); // Oculta el loader de productos
+        hideLoading('products-loading-spinner');
         const existingMessageBox = document.querySelector('.message-box-autodismiss');
-        if (existingMessageBox) {
-            existingMessageBox.remove();
-        }
+        if (existingMessageBox) existingMessageBox.remove();
     }
 }
 
@@ -1361,7 +1367,7 @@ function applySortAndRender() {
 
   container.innerHTML = '';
   if (!list.length) {
-    container.innerHTML = '<p class="col-span-full text-center text-futuristic-mute">No hay productos disponibles.</p>'; // Adjusted color
+    container.innerHTML = '<p class="col-span-full text-center text-futuristic-mute">No hay productos disponibles.</p>';
   } else {
     list.forEach(p => {
       const {
@@ -1372,8 +1378,11 @@ function applySortAndRender() {
         description = '',
         componentsUrl,
         videoUrl,
-        category
+        category,
+        categoryName
       } = p;
+
+      const catLabel = categoryName || category; // <--- compat legacy + nuevo
 
       let mediaHtml = '';
       if (videoUrl && typeof videoUrl === 'string') {
@@ -1389,7 +1398,7 @@ function applySortAndRender() {
       if (!mediaHtml) {
         mediaHtml = `
           <div class="media-frame relative aspect-[4/3] overflow-hidden rounded-t-2xl">
-            ${category ? `<span class="cat-badge">${category}</span>` : ''}
+            ${catLabel ? `<span class="cat-badge">${catLabel}</span>` : ''}
             <img loading="lazy" decoding="async"
                  src="${imageUrl || 'https://placehold.co/600x400/cccccc/333333?text=Sin+Imagen'}"
                  alt="${name}"
