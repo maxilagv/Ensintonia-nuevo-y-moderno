@@ -82,6 +82,34 @@ async function initFirebase() {
                     userIdDisplay.textContent = `ID de Usuario: ${userId}`;
                 }
 
+                // Si la URL trae ?cat=Nombre: mostrar solo esa categoría y ocultar categorías
+                try {
+                  const u = new URL(window.location.href);
+                  const cat = u.searchParams.get('cat');
+                  if (cat) {
+                    console.log("initFirebase - Parámetro cat= detectado:", cat, " -> solo productos de esa categoría, ocultando categorías.");
+
+                    // Ocultar sección/caja de categorías
+                    const categoriesSection = document.getElementById('productos');
+                    if (categoriesSection) categoriesSection.style.display = 'none';
+                    const categoriesContainer = document.getElementById('categories-container');
+                    if (categoriesContainer) categoriesContainer.style.display = 'none';
+
+                    // Título dinámico arriba de productos
+                    const titleEl = document.getElementById('category-title');
+                    if (titleEl) titleEl.textContent = `Mostrando productos de: ${cat}`;
+
+                    // Marcar categorías como completas para el loader global
+                    categoriesInitialLoadComplete = true;
+
+                    // Cargar productos filtrados y salir de esta rama
+                    loadProductsByCategory(cat);
+                    return; // Evitar que se ejecuten loadCategories/loadAllProducts más abajo
+                  }
+                } catch (e) {
+                  console.warn('initFirebase - No se pudo leer parámetro cat, seguimos flujo normal.', e);
+                }
+
 
                 // Cargar categorías y productos después de la autenticación
                 console.log("initFirebase - Llamando a loadCategories y a la carga de productos adecuada según URL.");
@@ -291,7 +319,10 @@ async function loadCategories() {
                 // Renderizar en el submenú móvil: link directo a catalogo.html?cat=
                 const submenuItem = `
                     <li>
-                        <a href="/catalogo.html?cat=${encodeURIComponent(category.name)}" onclick="closeMobileMenu()" class="block py-2 text-base text-futuristic-ink hover:text-brand-1 transition duration-200">
+                        <a href="/catalogo.html?cat=${encodeURIComponent(category.name)}"
+                           data-cat="${(category.name || '').replace(/\"/g,'&quot;')}"
+                           onclick="goToCategory(this.dataset.cat)"
+                           class="block py-2 text-base text-futuristic-ink hover:text-brand-1 transition duration-200">
                             ${category.name}
                         </a>
                     </li>
@@ -551,6 +582,7 @@ function goToCategory(categoryName) {
     // Si ya estamos en catalogo.html, filtrar aquí sin recargar
     showMessageBox(`Cargando productos de la categoría: ${categoryName}...`, 900);
     loadProductsByCategory(categoryName);
+    try { history.pushState({ cat: categoryName }, "", `/catalogo.html?cat=${encodeURIComponent(categoryName)}`); } catch (_) {}
     closeMobileMenu();
     const catalogEl = document.getElementById('catalogo-productos');
     if (catalogEl) catalogEl.scrollIntoView({ behavior: 'smooth' });
@@ -678,10 +710,12 @@ function startCategoryImageAnimation(cardElement) {
     const intervalId = setInterval(() => {
         currentIndex = (currentIndex + 1) % productImages.length;
         // Aplicar un efecto de desvanecimiento sutil
-        imgElement.style.opacity = '0';
+        imgElement.classList.add('fade-out');
         setTimeout(() => {
             imgElement.src = productImages[currentIndex];
-            imgElement.style.opacity = '1';
+            imgElement.classList.remove('fade-out');
+            imgElement.classList.add('fade-in');
+            setTimeout(() => imgElement.classList.remove('fade-in'), 600);
         }, 300); // 300ms coincide con la duración de la transición CSS
     }, 2000); // Cambiar imagen cada 2 segundos
 
@@ -702,10 +736,12 @@ function stopCategoryImageAnimation(cardElement) {
         const imgElement = cardElement.querySelector('.category-image-animated');
         if (imgElement) {
             // Revertir la imagen a la original con un desvanecimiento
-            imgElement.style.opacity = '0';
+            imgElement.classList.add('fade-out');
             setTimeout(() => {
                 imgElement.src = cardElement.dataset.originalImage;
-                imgElement.style.opacity = '1';
+                imgElement.classList.remove('fade-out');
+                imgElement.classList.add('fade-in');
+                setTimeout(() => imgElement.classList.remove('fade-in'), 600);
             }, 300);
         }
     }
@@ -1117,6 +1153,65 @@ async function fetchProductById(id) {
   return prod;
 }
 
+/**
+ * Cargar y renderizar productos similares por categor
+ * @param {string} categoryName - Nombre de la categor a filtrar
+ * @param {string} excludeId - ID del producto actual a excluir
+ */
+async function loadSimilarProducts(categoryName, excludeId) {
+  const wrap = document.getElementById('similar-products-container');
+  if (!wrap) return;
+  if (!categoryName) { wrap.innerHTML = ''; return; }
+
+  wrap.innerHTML = '<p class="col-span-full text-center text-futuristic-mute">Cargando productos similares...</p>';
+  try {
+    const productsColRef = collection(db, `artifacts/${appId}/public/data/products`);
+    let q1 = query(productsColRef, where('categoryName', '==', categoryName), limit(6));
+    let snapshot = await getDocs(q1);
+    if (snapshot.empty) {
+      const q2 = query(productsColRef, where('category', '==', categoryName), limit(6));
+      snapshot = await getDocs(q2);
+    }
+
+    wrap.innerHTML = '';
+    let count = 0;
+    snapshot.forEach(docSnap => {
+      const id = docSnap.id;
+      if (excludeId && id === excludeId) return;
+      const p = docSnap.data() || {};
+      const name = p.name || p.nombre || 'Producto';
+      const imageUrl = (Array.isArray(p.images) && p.images[0])
+                    || (Array.isArray(p.imagenes) && p.imagenes[0])
+                    || p.imageUrl || p.imagen || 'https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen';
+      const price = (p.price !== undefined ? p.price : p.precio);
+      const priceHtml = (price !== undefined && price !== null)
+        ? `<div class="mt-2"><span class="price-chip"><i class="fa-solid fa-tag text-white/80 text-xs"></i>$${Number(price).toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2})}</span></div>`
+        : '';
+
+      const card = document.createElement('div');
+      card.className = 'product-card group rounded-2xl flex flex-col cursor-pointer';
+      card.dataset.id = id;
+      card.innerHTML = `
+        <div class="relative aspect-[4/3] overflow-hidden rounded-t-2xl">
+          <img src="${imageUrl}" alt="${name}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen';">
+        </div>
+        <div class="p-3">
+          <h4 class="text-sm font-medium text-futuristic-ink line-clamp-2">${name}</h4>
+          ${priceHtml}
+        </div>`;
+      wrap.appendChild(card);
+      count++;
+    });
+
+    if (count === 0) {
+      wrap.innerHTML = '<p class="col-span-full text-center text-futuristic-mute">No hay productos similares.</p>';
+    }
+  } catch (e) {
+    console.error('loadSimilarProducts - Error:', e);
+    wrap.innerHTML = '<p class="col-span-full text-center text-futuristic-mute">No se pudieron cargar productos similares.</p>';
+  }
+}
+
 /* UI references */
 const $pd = {
   overlay: document.getElementById('pd-overlay'),
@@ -1277,6 +1372,13 @@ function renderProductDetail(prod){
   if($pd.whatsapp) $pd.whatsapp.href = `https://wa.me/5491159914197?text=${msg}`;
 
   activateTab('desc');
+
+  // Cargar productos similares segn su categora
+  try {
+    const catName = prod.categoryName || prod.category || prod.categoria || prod.categoriaNombre;
+    const excludeId = prod.id;
+    loadSimilarProducts(catName, excludeId);
+  } catch(_) { /* noop */ }
 }
 
 /* Delegación: abrir modal al clickear .product-card (usa data-id o id product-*) */
@@ -1342,13 +1444,37 @@ document.addEventListener('click', (e) => {
     }
   } catch (e) { /* noop */ }
 })();
+// Manejar navegación con botón "Atrás" para alternar entre catálogo general y por categoría
+window.addEventListener('popstate', () => {
+  try {
+    const u = new URL(window.location.href);
+    const cat = u.searchParams.get('cat');
+    const titleEl = document.getElementById('category-title');
+    const categoriesSectionEl = document.getElementById('productos');
+    const categoriesContainerEl = document.getElementById('categories-container');
+    if (cat) {
+      if (titleEl) titleEl.textContent = `Mostrando productos de: ${cat}`;
+      if (categoriesSectionEl) categoriesSectionEl.style.display = 'none';
+      if (categoriesContainerEl) categoriesContainerEl.style.display = 'none';
+      categoriesInitialLoadComplete = true;
+      loadProductsByCategory(cat);
+    } else {
+      if (categoriesSectionEl) categoriesSectionEl.style.display = '';
+      if (categoriesContainerEl) categoriesContainerEl.style.display = '';
+      if (titleEl) titleEl.textContent = 'Todos Nuestros Productos';
+      loadCategories();
+      loadAllProducts();
+    }
+  } catch (_) { /* noop */ }
+});
 /* === end product detail modal logic === */
 
 /* === SORT + RENDER (añadido) === */
 function applySortAndRender() {
   const container = document.getElementById('contenedor-productos');
   if (!container) return;
-  let list = [...productsFullCache];
+  const activeFiltered = (typeof window !== 'undefined') ? (window.__filteredList || null) : null;
+  let list = [...(activeFiltered && Array.isArray(activeFiltered) ? activeFiltered : productsFullCache)];
 
   const getTS = v => {
     if(!v) return 0;
@@ -1470,4 +1596,46 @@ document.addEventListener('DOMContentLoaded', () => {
       applySortAndRender();
     });
   }
+  // Permitir Enter para aplicar filtro de precio
+  const minI = document.getElementById('min-price');
+  const maxI = document.getElementById('max-price');
+  [minI, maxI].forEach(inp => {
+    if (inp && !inp.dataset.bindEnter) {
+      inp.dataset.bindEnter = '1';
+      inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') { if (typeof window.applyPriceFilter === 'function') window.applyPriceFilter(); } });
+    }
+  });
 });
+
+// Filtro por rango de precio (sobre el conjunto cargado actual)
+function applyPriceFilter() {
+  const minEl = document.getElementById('min-price');
+  const maxEl = document.getElementById('max-price');
+  const min = minEl ? parseFloat(minEl.value) : NaN;
+  const max = maxEl ? parseFloat(maxEl.value) : NaN;
+  const minV = isNaN(min) ? 0 : min;
+  const maxV = isNaN(max) ? Infinity : max;
+
+  try { console.log(`Filtrando por rango de precio: ${minV} - ${maxV}`); } catch(_){}
+
+  if (minV === 0 && maxV === Infinity) {
+    // limpiar filtro
+    if (typeof window !== 'undefined') window.__filteredList = null;
+    applySortAndRender();
+    return;
+  }
+
+  const filtered = (productsFullCache || []).filter(p => {
+    const priceNum = Number(p.price ?? p.precio);
+    const val = isFinite(priceNum) ? priceNum : 0;
+    return val >= minV && val <= maxV;
+  });
+
+  if (typeof window !== 'undefined') window.__filteredList = filtered;
+  applySortAndRender();
+}
+
+// Exponer para onclick en HTML (script type=module)
+if (typeof window !== 'undefined') {
+  window.applyPriceFilter = applyPriceFilter;
+}
