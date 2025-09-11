@@ -693,7 +693,7 @@
     <!-- Nueva Sección para Productos (Catálogo General) -->
     <section id="catalogo-productos" class="py-16 sm:py-20">
         <div class="container mx-auto px-4">
-            <h2 class="text-3xl sm:text-4xl font-bold text-center mb-12 sm:mb-16 hero-catalog-title animate-fade-in-down">Todos Nuestros Productos</h2>
+            <h2 id="category-title" class="text-3xl sm:text-4xl font-bold text-center mb-12 sm:mb-16 hero-catalog-title animate-fade-in-down">Todos Nuestros Productos</h2>
 
             <div class="flex flex-wrap items-center justify-end gap-3 mb-6">
               <label for="product-sort" class="text-sm font-medium text-futuristic-mute">Ordenar:</label>
@@ -709,6 +709,18 @@
             <!-- Loader productos (añadido) -->
             <div id="products-inline-spinner" class="w-full flex justify-center py-8 hidden">
               <div class="animate-spin h-8 w-8 border-4 border-brand-100 border-t-transparent rounded-full"></div>
+            </div>
+
+            <!-- Filtro por rango de precio -->
+            <div id="price-filter" class="flex flex-wrap items-center gap-3 mb-6">
+              <input id="min-price" type="number" min="0" step="0.01" placeholder="Precio mínimo"
+                     class="px-3 py-2 rounded-lg bg-gray-800/70 text-white w-40 focus:outline-none focus:ring-2 focus:ring-brand-100/30 border border-white/10" />
+              <input id="max-price" type="number" min="0" step="0.01" placeholder="Precio máximo"
+                     class="px-3 py-2 rounded-lg bg-gray-800/70 text-white w-40 focus:outline-none focus:ring-2 focus:ring-brand-100/30 border border-white/10" />
+              <button onclick="applyPriceFilter()"
+                      class="px-4 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700 shadow-sm">
+                Filtrar
+              </button>
             </div>
 
             <div id="contenedor-productos" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -803,6 +815,12 @@
               </div>
             </div>
           </div>
+
+          <!-- Productos similares -->
+          <div id="similar-products" class="p-4 pt-0">
+            <h3 class="text-base md:text-lg font-semibold text-futuristic-ink mb-3">Productos similares</h3>
+            <div id="similar-products-container" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+          </div>
         </div>
 
         <!-- Footer -->
@@ -855,5 +873,41 @@
           }
         },60);
     </script>
+    
+    <!-- Forzar que la página siempre arranque arriba del todo -->
+    <script>
+      (function () {
+        const toTop = () => window.scrollTo(0, 0);
+
+        if ('scrollRestoration' in history) {
+          history.scrollRestoration = 'manual';
+        }
+
+        /* Mejora transición imágenes de categorías */
+        .category-image-animated {
+          transition: opacity .6s ease, transform 1s ease;
+        }
+        .category-image-animated.fade-out {
+          opacity: 0;
+          transform: scale(1.05);
+        }
+        .category-image-animated.fade-in {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        // Al cargar
+        window.addEventListener('load', toTop, { once: true });
+
+        // Si vuelve desde el BFCache (ej: atrás/adelante en Safari/Firefox)
+        window.addEventListener('pageshow', function (e) {
+          if (e.persisted) toTop();
+        });
+
+        // Tick extra por compatibilidad
+        setTimeout(toTop, 0);
+      })();
+    </script>
 </body>
 </html>
+
