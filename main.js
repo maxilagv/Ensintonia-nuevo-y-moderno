@@ -85,7 +85,7 @@ async function initFirebase() {
                 // Si la URL trae ?cat=Nombre: mostrar solo esa categoría y ocultar categorías
                 try {
                   const u = new URL(window.location.href);
-                  const cat = u.searchParams.get('cat');
+                  const cat = u.searchParams.get('cat') || u.searchParams.get('category');
                   if (cat) {
                     console.log("initFirebase - Parámetro cat= detectado:", cat, " -> solo productos de esa categoría, ocultando categorías.");
 
@@ -117,7 +117,7 @@ async function initFirebase() {
                 // Si la URL trae ?cat=Nombre, abrir la carga filtrada; si no, cargar todos.
                 try {
                   const u = new URL(window.location.href);
-                  const cat = u.searchParams.get('cat');
+                  const cat = u.searchParams.get('cat') || u.searchParams.get('category');
                   if (cat) {
                     console.log("initFirebase - Parámetro cat detectado en URL:", cat, " -> llamando a loadProductsByCategory.");
                     loadProductsByCategory(cat);
@@ -282,8 +282,10 @@ async function loadCategories() {
                 // Usar class category-card para no interferir con product-card
                 categoryCardDiv.className = "category-card group rounded-2xl flex flex-col"; // Clases del product-card para aplicar estilos futuristas
                 // Apuntar a la página de catálogo con parámetro ?cat=para navegación cross-page
-                const targetUrl = `/catalogo.html?cat=${encodeURIComponent(category.name)}`;
-                categoryCardDiv.setAttribute('onclick', `location.href='${targetUrl}'`);
+                categoryCardDiv.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    goToCategory(category.name);
+                });
 
                 categoryCardDiv.setAttribute('data-category-name', category.name);
                 categoryCardDiv.setAttribute('data-original-image', category.imageUrl || 'https://placehold.co/600x400/cccccc/333333?text=Sin+Imagen');
@@ -321,7 +323,7 @@ async function loadCategories() {
                     <li>
                         <a href="/catalogo.html?cat=${encodeURIComponent(category.name)}"
                            data-cat="${(category.name || '').replace(/\"/g,'&quot;')}"
-                           onclick="goToCategory(this.dataset.cat)"
+                           onclick="goToCategory(this.dataset.cat); return false;"
                            class="block py-2 text-base text-futuristic-ink hover:text-brand-1 transition duration-200">
                             ${category.name}
                         </a>
@@ -1639,3 +1641,5 @@ function applyPriceFilter() {
 if (typeof window !== 'undefined') {
   window.applyPriceFilter = applyPriceFilter;
 }
+
+
