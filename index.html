@@ -1097,7 +1097,7 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
         if ($home){
           const li = document.createElement('li');
           li.className = 'px-3 py-2 rounded-full category-tag';
-          li.innerHTML = `<a href="catalogo.html?category=${slug}#cat-${slug}" class="flex items-center gap-1" data-cat="${slug}">
+          li.innerHTML = `<a href=\"catalogo.html?cat=${'${encodeURIComponent(name)}'}\" class=\"flex items-center gap-1\" data-cat=\"${'${slug}'}\">
             ${icon ? `<img src="${icon}" class="w-4 h-4 object-contain" alt="">` : ''}
             <span>${name}</span>
           </a>`;
@@ -1106,7 +1106,7 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
 
         if ($mobile){
           const liM = document.createElement('li');
-          liM.innerHTML = `<a data-cat="${slug}" href="catalogo.html?category=${slug}#cat-${slug}"
+          liM.innerHTML = `<a data-cat=\"${'${slug}'}\" href=\"catalogo.html?cat=${'${encodeURIComponent(name)}'}\"
               class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 text-sm">
               ${icon ? `<img src="${icon}" class="w-4 h-4 object-contain" alt="">` : ''}
               <span>${name}</span>
@@ -1116,7 +1116,7 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
 
         if ($select){
           const opt = document.createElement('option');
-          opt.value = slug;
+          opt.value = name;
           opt.textContent = name;
           $select.appendChild(opt);
         }
@@ -1149,7 +1149,7 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
       $select.addEventListener('change', ()=>{
         if ($select.value){
           if ($clear) $clear.hidden = false;
-          window.location.href = `catalogo.html?category=${$select.value}`;
+          window.location.href = `catalogo.html?cat=${encodeURIComponent($select.value)}`;
         } else {
           if ($clear) $clear.hidden = true;
         }
@@ -1191,15 +1191,14 @@ Schema.org — Organization (ajustá datos si cambia el teléfono o agregás red
       roots.forEach(root=>{
         if(!root) return;
         root.querySelectorAll('a').forEach(a=>{
-          const slug = (a.dataset.cat && a.dataset.cat.trim()) || slugify(a.textContent || '');
-          if(!slug) return;
-          const want = `catalogo.html?category=${slug}#cat-${slug}`;
+          const catName = (a.querySelector('span')?.textContent || a.textContent || '').trim();
+          if(!catName) return;
+          const want = `catalogo.html?cat=${encodeURIComponent(catName)}`;
           a.setAttribute('href', want);
-          a.dataset.cat = slug;
           if(!a.__catPatched){
             a.addEventListener('click', e=>{
               const current = a.getAttribute('href') || '';
-              if(!current.includes('?category=')){ 
+              if(!current.includes('?cat=')){
                 e.preventDefault();
                 location.href = want;
               }
@@ -1232,6 +1231,7 @@ if (category) {
 -->
 </body>
 </html>
+
 
 
 
