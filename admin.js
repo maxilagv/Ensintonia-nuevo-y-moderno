@@ -119,7 +119,17 @@ async function initFirebaseAndAuth() {
             return;
         }
 
-        // AHORA, cualquier usuario logueado se considera admin.
+        // Bloquear sesiones anónimas en el panel admin
+        if (user.isAnonymous) {
+            console.warn("Admin Panel - Usuario anónimo. Requiere iniciar sesión con cuenta admin.");
+            showMessageBox("Debes iniciar sesión con una cuenta de administrador.", 'warning');
+            localStorage.removeItem('loggedIn');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+            return;
+        }
+
+        // AHORA, cualquier usuario logueado (no anónimo) se considera admin en la UI.
+        // La autorización real la aplican las reglas de Firestore (rol 'full').
         const isAdmin = true; 
 
         if (isAdmin) {
@@ -165,17 +175,36 @@ async function initFirebaseAndAuth() {
 
 
 // Referencias a colecciones de Firestore
-const categoriesCollectionRef = collection(db, `artifacts/${appId}/public/data/categories`);
-const productsCollectionRef = collection(db, `artifacts/${appId}/public/data/products`);
+// Resolver appId desde window si está disponible
+const __APP_NS = (typeof window !== 'undefined' && window.__app_id) ? window.__app_id : appId;
+const categoriesCollectionRef = collection(db, `artifacts/${__APP_NS}/public/data/categories`);
+const productsCollectionRef = collection(db, `artifacts/${__APP_NS}/public/data/products`);
+const contactMessagesRef = collection(db, `artifacts/${__APP_NS}/public/data/contact_messages`);
+// Las referencias a colecciones deben tener un número impar de segmentos.
+// Usamos 'admin/data/<colección>' para mantener la estructura consistente con 'public/data/<colección>'.
+const contactResponsesRef = collection(db, `artifacts/${__APP_NS}/admin/data/contact_responses`);
+const outboundEmailQueueRef = collection(db, `artifacts/${__APP_NS}/admin/data/outbound_email_queue`);
 
 const navButtons = document.querySelectorAll('.nav-button');
 const sections = document.querySelectorAll('.section-content');
+// Leer lista de secciones permitidas desde variable global o querystring (comma-separated)
+let ALLOWED_SECTIONS = null;
+try {
+    const params = new URLSearchParams(window.location.search || '');
+    const allowedFromQuery = params.get('allowed');
+    if (Array.isArray(window.ALLOWED_SECTIONS)) {
+        ALLOWED_SECTIONS = window.ALLOWED_SECTIONS;
+    } else if (allowedFromQuery) {
+        ALLOWED_SECTIONS = allowedFromQuery.split(',').map(s => s.trim()).filter(Boolean);
+    }
+} catch (_) { /* noop */ }
 const logoutButton = document.getElementById('logoutButton');
 const sendVerificationEmailButton = document.getElementById('sendVerificationEmailButton'); // Nuevo botón
 
 const createCategoryForm = document.getElementById('createCategoryForm');
 const editCategorySection = document.getElementById('editCategory');
 const selectCategoryToEdit = document.getElementById('selectCategoryToEdit');
+const searchCategoryToEditInput = document.getElementById('searchCategoryToEdit');
 const editedCategoryNameInput = document.getElementById('editedCategoryName');
 const editedCategoryImageUrlInput = document.getElementById('editedCategoryImageUrl');
 const saveCategoryChangesButton = editCategorySection.querySelector('.action-button');
@@ -189,6 +218,7 @@ const productWarrantyInput = document.getElementById('productWarranty'); // Nuev
 
 const editProductSection = document.getElementById('editProduct');
 const selectProductToEdit = document.getElementById('selectProductToEdit');
+const searchProductToEditInput = document.getElementById('searchProductToEdit');
 const editedProductNameInput = document.getElementById('editedProductName');
 const editedProductPriceInput = document.getElementById('editedProductPrice');
 const editedProductImageUrlInput = document.getElementById('editedProductImageUrl');
@@ -212,9 +242,19 @@ const decreaseStockButton = document.getElementById('decreaseStockButton');
 // Botón de migración
 const migrateDataButton = document.getElementById('migrateDataButton');
 
+// Caches para búsquedas y orden alfabético en edición
+let categoriesForEditCache = [];
+let productsForEditCache = [];
+
 
 // Función para cambiar de sección
 function showSection(sectionId) {
+    if (Array.isArray(ALLOWED_SECTIONS) && ALLOWED_SECTIONS.length > 0) {
+        if (!ALLOWED_SECTIONS.includes(sectionId)) {
+            showMessageBox('No tienes permisos para ver esta sección.', 'warning');
+            return;
+        }
+    }
     sections.forEach(section => {
         section.classList.add('hidden');
     });
@@ -237,6 +277,164 @@ function showSection(sectionId) {
         }
     } else if (sectionId === 'manageStock') {
         loadProductsForStockManagement();
+    } else if (sectionId === 'messages') {
+        loadContactMessages();
+    } else if (sectionId === 'backup') {
+        // no-op
+    }
+}
+
+// --- Mensajes recibidos ---
+async function loadContactMessages(){
+    try{
+        const snap = await getDocs(contactMessagesRef);
+        const rows = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        rows.sort((a,b)=>{
+            const ta = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().getTime() : (a.createdAt||0);
+            const tb = b.createdAt && b.createdAt.toDate ? b.createdAt.toDate().getTime() : (b.createdAt||0);
+            return tb - ta;
+        });
+        renderMessages(rows);
+    } catch(err){
+        console.error('loadContactMessages error', err);
+        showMessageBox('Error al cargar mensajes','error');
+    }
+}
+
+function renderMessages(items){
+    const box = document.getElementById('messagesList');
+    if (!box) return;
+    if (!items || items.length === 0){
+        box.innerHTML = '<p class="text-center text-gray-400">No hay mensajes.</p>';
+        return;
+    }
+    box.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    items.forEach(msg => {
+        const card = document.createElement('div');
+        card.className = 'p-4 rounded-xl bg-white/5 border border-white/10';
+        const when = msg.createdAt?.toDate ? msg.createdAt.toDate() : (msg.createdAt || null);
+        const whenStr = when ? new Date(when).toLocaleString() : '';
+        card.innerHTML = `
+            <div class="flex flex-col gap-2">
+                <div class="flex flex-wrap gap-3 items-center">
+                    <span class="text-sm text-gray-400">${whenStr}</span>
+                    <span class="text-sm"><strong>Nombre:</strong> ${escapeHtml(msg.name||'')}</span>
+                    <span class="text-sm"><strong>Email:</strong> <a href="mailto:${msg.email||''}" class="text-sky-400 underline">${msg.email||''}</a></span>
+                    ${ (msg.phone || msg.telefono || msg.tel) ? `<span class="text-sm"><strong>Teléfono:</strong> <a href="tel:${msg.phone || msg.telefono || msg.tel}" class="text-sky-400 underline">${msg.phone || msg.telefono || msg.tel}</a></span>` : '' }
+                </div>
+                <div class="text-base text-gray-200"><strong>Asunto:</strong> ${escapeHtml(msg.subject||'')}</div>
+                <div class="text-gray-100 whitespace-pre-wrap">${escapeHtml(msg.message||'')}</div>
+                <div class="mt-3 text-sm text-gray-400">Responder por correo o teléfono usando los enlaces.</div>
+            </div>
+        `;
+        // Añadir botón de eliminación (para retirar mensajes atendidos)
+        try {
+            const root = card.firstElementChild || card;
+            const actionsContainer = document.createElement('div');
+            actionsContainer.className = 'mt-3 flex items-center gap-3';
+            const note = document.createElement('span');
+            note.className = 'text-sm text-gray-400';
+            note.textContent = 'Responder por correo o teléfono usando los enlaces.';
+            const delBtn = document.createElement('button');
+            delBtn.className = 'action-button bg-red-600 hover:bg-red-700';
+            delBtn.setAttribute('data-action','delete-message');
+            delBtn.setAttribute('data-id', String(msg.id||''));
+            delBtn.textContent = 'Eliminar';
+            actionsContainer.appendChild(note);
+            actionsContainer.appendChild(delBtn);
+            if (root) root.appendChild(actionsContainer); else card.appendChild(actionsContainer);
+        } catch(_) { /* noop */ }
+        frag.appendChild(card);
+    });
+    box.appendChild(frag);
+}
+
+// Respuesta por app deshabilitada: se responde por email/teléfono desde los enlaces
+
+function escapeHtml(s){
+    return String(s||'')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/\"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+}
+
+// Eliminar mensajes recibidos (marcar como atendidos)
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action="delete-message"]');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    if (!id) return;
+    const ok = window.confirm('¿Eliminar este mensaje de la bandeja?');
+    if (!ok) return;
+    try {
+        await deleteDoc(doc(db, `artifacts/${__APP_NS}/public/data/contact_messages`, id));
+        showMessageBox('Mensaje eliminado', 'success');
+        await loadContactMessages();
+    } catch (err) {
+        console.error('delete message error', err);
+        showMessageBox('No se pudo eliminar el mensaje', 'error');
+    }
+});
+
+async function queueContactReply({ messageId, toEmail, subject, body }){
+    const payload = {
+        messageId,
+        toEmail,
+        subject,
+        body,
+        createdAt: serverTimestamp(),
+        createdBy: userId || null,
+        status: 'queued'
+    };
+    await addDoc(contactResponsesRef, payload);
+    await addDoc(outboundEmailQueueRef, { ...payload, type: 'contact_reply' });
+}
+
+// --- Respaldo (Backup) ---
+async function runBackup(){
+    if (!isAuthReady){ showMessageBox('Debes estar autenticado.','warning'); return; }
+    const btn = document.getElementById('runBackupButton');
+    const status = document.getElementById('backupStatus');
+    try {
+        if (btn) btn.disabled = true; if (status) status.textContent = 'Creando respaldo…';
+        const stamp = new Date();
+        const pad = (n)=> String(n).padStart(2,'0');
+        const key = `${stamp.getFullYear()}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}_${pad(stamp.getHours())}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}`;
+        const sets = [
+            { name:'categories', ref: categoriesCollectionRef },
+            { name:'products', ref: productsCollectionRef },
+            { name:'contact_messages', ref: contactMessagesRef }
+        ];
+        const counts = {};
+        for (const s of sets){
+            const snap = await getDocs(s.ref);
+            counts[s.name] = snap.size;
+            for (const d of snap.docs){
+                const data = d.data();
+                const primaryCol = collection(db, `artifacts/${appId}/backups/${key}/${s.name}`);
+                const fallbackCol = collection(db, `artifacts/${appId}/admin/data/backups_${key}_${s.name}`);
+                try {
+                    await addDoc(primaryCol, { ...data, _origId: d.id, _backupAt: serverTimestamp(), _backupBy: userId || null });
+                } catch (e) {
+                    if (e && (e.code === 'permission-denied' || e.message?.includes('Missing or insufficient permissions'))) {
+                        await addDoc(fallbackCol, { ...data, _origId: d.id, _backupAt: serverTimestamp(), _backupBy: userId || null });
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+        }
+        if (status) status.textContent = `Respaldo creado: ${key} (cats:${counts.categories||0}, prods:${counts.products||0}, msgs:${counts.contact_messages||0})`;
+        showMessageBox('Respaldo creado con éxito','success');
+    } catch (err){
+        console.error('runBackup error', err);
+        if (status) status.textContent = 'Error al crear respaldo';
+        showMessageBox('Error al crear respaldo','error');
+    } finally {
+        if (btn) btn.disabled = false;
     }
 }
 
@@ -248,21 +446,53 @@ async function loadCategoriesForEdit() {
         console.log("loadCategoriesForEdit: Usuario no autenticado para cargar categorías.");
         return;
     }
-    selectCategoryToEdit.innerHTML = '<option value="">-- Selecciona una categoría --</option>';
     try {
         console.log("loadCategoriesForEdit: Cargando categorías para edición...");
         const querySnapshot = await getDocs(categoriesCollectionRef);
-        querySnapshot.forEach((doc) => {
-            const category = doc.data();
-            const option = document.createElement('option');
-            option.value = doc.id;
-            option.textContent = category.name;
-            selectCategoryToEdit.appendChild(option);
+        const list = [];
+        querySnapshot.forEach((d) => {
+            const data = d.data();
+            list.push({ id: d.id, name: data?.name || '' });
         });
-        console.log("loadCategoriesForEdit: Categorías cargadas exitosamente.");
+        // Orden alfabético por nombre (insensible a mayúsculas/minúsculas)
+        list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' }));
+        categoriesForEditCache = list;
+        const filterText = (searchCategoryToEditInput?.value || '').trim();
+        renderCategoryEditOptions(filterText);
+        console.log("loadCategoriesForEdit: Categorías cargadas y ordenadas.");
     } catch (error) {
         console.error("loadCategoriesForEdit: Error al cargar categorías:", error);
         showMessageBox("Error al cargar categorías.", "error");
+    }
+}
+
+function renderCategoryEditOptions(filterText = '') {
+    if (!selectCategoryToEdit) return;
+    const previousValue = selectCategoryToEdit.value;
+    selectCategoryToEdit.innerHTML = '<option value="">-- Selecciona una categoría --</option>';
+    const normalized = (filterText || '').toLowerCase();
+    let filtered = categoriesForEditCache.slice();
+    if (normalized) {
+        const starts = filtered.filter(c => (c.name || '').toLowerCase().startsWith(normalized));
+        const contains = filtered.filter(c => !(c.name || '').toLowerCase().startsWith(normalized) && (c.name || '').toLowerCase().includes(normalized));
+        filtered = starts.concat(contains);
+    }
+    for (const c of filtered) {
+        const option = document.createElement('option');
+        option.value = c.id;
+        option.textContent = c.name;
+        selectCategoryToEdit.appendChild(option);
+    }
+    // Restaurar selección si sigue visible
+    if (previousValue && filtered.some(c => c.id === previousValue)) {
+        selectCategoryToEdit.value = previousValue;
+    } else if (normalized && filtered.length > 0) {
+        // Seleccionar automáticamente el primer resultado visible
+        selectCategoryToEdit.value = filtered[0].id;
+        populateCategoryEditForm(selectCategoryToEdit.value);
+    } else if (previousValue) {
+        // Si había una selección pero quedó fuera y no hay filtro, limpiar
+        populateCategoryEditForm('');
     }
 }
 
@@ -439,22 +669,53 @@ async function loadProductsForEdit() {
         console.log("loadProductsForEdit: Usuario no autenticado para cargar productos.");
         return;
     }
-    selectProductToEdit.innerHTML = '<option value="">-- Selecciona un producto --</option>';
     try {
         console.log("loadProductsForEdit: Cargando productos para edición...");
         const querySnapshot = await getDocs(productsCollectionRef);
-        querySnapshot.forEach((doc) => {
-            const product = doc.data();
-            const option = document.createElement('option');
-            option.value = doc.id;
-            option.textContent = product.name;
-            option.classList.add('select-option-text'); 
-            selectProductToEdit.appendChild(option);
+        const list = [];
+        querySnapshot.forEach((d) => {
+            const data = d.data();
+            list.push({ id: d.id, name: data?.name || '' });
         });
-        console.log("loadProductsForEdit: Productos cargados exitosamente.");
+        // Orden alfabético por nombre
+        list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' }));
+        productsForEditCache = list;
+        const filterText = (searchProductToEditInput?.value || '').trim();
+        renderProductEditOptions(filterText);
+        console.log("loadProductsForEdit: Productos cargados y ordenados.");
     } catch (error) {
         console.error("loadProductsForEdit: Error al cargar productos:", error);
         showMessageBox("Error al cargar productos.", "error");
+    }
+}
+
+function renderProductEditOptions(filterText = '') {
+    if (!selectProductToEdit) return;
+    const previousValue = selectProductToEdit.value;
+    selectProductToEdit.innerHTML = '<option value="">-- Selecciona un producto --</option>';
+    const normalized = (filterText || '').toLowerCase();
+    let filtered = productsForEditCache.slice();
+    if (normalized) {
+        const starts = filtered.filter(p => (p.name || '').toLowerCase().startsWith(normalized));
+        const contains = filtered.filter(p => !(p.name || '').toLowerCase().startsWith(normalized) && (p.name || '').toLowerCase().includes(normalized));
+        filtered = starts.concat(contains);
+    }
+    for (const p of filtered) {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = p.name;
+        option.classList.add('select-option-text');
+        selectProductToEdit.appendChild(option);
+    }
+    // Restaurar selección si sigue visible
+    if (previousValue && filtered.some(p => p.id === previousValue)) {
+        selectProductToEdit.value = previousValue;
+    } else if (normalized && filtered.length > 0) {
+        // Seleccionar automáticamente el primer resultado visible
+        selectProductToEdit.value = filtered[0].id;
+        populateProductEditForm(selectProductToEdit.value);
+    } else if (previousValue) {
+        populateProductEditForm('');
     }
 }
 
@@ -872,6 +1133,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Insertar el div de mensaje antes del sectionsContainer en el DOM
     document.querySelector('.admin-panel-container').insertBefore(adminMessageDiv, sectionsContainer);
 
+    // Si hay secciones permitidas definidas, ocultar botones de navegación no permitidos
+    try {
+        if (Array.isArray(ALLOWED_SECTIONS) && ALLOWED_SECTIONS.length > 0) {
+            navButtons.forEach(btn => {
+                const sec = btn.getAttribute('data-section');
+                if (sec && !ALLOWED_SECTIONS.includes(sec)) {
+                    btn.classList.add('hidden');
+                }
+            });
+        }
+    } catch (_) { /* noop */ }
+
 
     navButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -925,6 +1198,13 @@ document.addEventListener('DOMContentLoaded', () => {
     selectCategoryToEdit.addEventListener('change', function() {
         populateCategoryEditForm(this.value);
     });
+
+    // Búsqueda en Editar Categoría
+    if (searchCategoryToEditInput) {
+        searchCategoryToEditInput.addEventListener('input', () => {
+            renderCategoryEditOptions(searchCategoryToEditInput.value.trim());
+        });
+    }
 
     if (saveCategoryChangesButton) {
         saveCategoryChangesButton.addEventListener('click', async function() {
@@ -1029,6 +1309,13 @@ document.addEventListener('DOMContentLoaded', () => {
     selectProductToEdit.addEventListener('change', function() {
         populateProductEditForm(this.value);
     });
+
+    // Búsqueda en Editar Producto
+    if (searchProductToEditInput) {
+        searchProductToEditInput.addEventListener('input', () => {
+            renderProductEditOptions(searchProductToEditInput.value.trim());
+        });
+    }
 
     if (saveProductChangesButton) {
         saveProductChangesButton.addEventListener('click', async function() {
@@ -1139,8 +1426,13 @@ document.addEventListener('DOMContentLoaded', () => {
         sendVerificationEmailButton.addEventListener('click', sendVerificationEmail);
     }
 
-    showSection('createCategory');
+    const defaultSection = typeof window !== 'undefined' && window.DEFAULT_SECTION ? window.DEFAULT_SECTION : 'createCategory';
+    showSection(defaultSection);
     loadCategoriesForProductForms();
+    const runBackupButton = document.getElementById('runBackupButton');
+    if (runBackupButton) runBackupButton.addEventListener('click', runBackup);
 });
 
 window.showMessageBox = showMessageBox;
+
+
